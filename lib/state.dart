@@ -32,6 +32,15 @@ class AppState extends ChangeNotifier {
   /// no computador a mídia fica onde está.
   static bool get copiesMedia => Platform.isAndroid || Platform.isIOS;
 
+  /// Para testes e capturas de tela: sem show de exemplo e sem arquivos de mídia.
+  @visibleForTesting
+  static AppState forTest(Store store, StageController stage, Engine engine, {List<Show> shows = const []}) {
+    final s = AppState._(store, stage, engine, true);
+    s.shows = List.of(shows);
+    engine.changes.listen((_) => s.notifyListeners());
+    return s;
+  }
+
   static Future<AppState> create() async {
     final store = await Store.open();
     final stage = StageController();

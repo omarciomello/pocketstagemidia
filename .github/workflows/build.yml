@@ -6,7 +6,32 @@ on:
   pull_request:
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
+  capturas:
+    needs: checar
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - name: Capturas das telas
+        run: CAPTURAS=1 bash tool/ci_run.sh "capturas" flutter test test/capturas_test.dart --update-goldens
+      - name: Publicar no ramo ci-capturas
+        run: |
+          cd test/goldens
+          git init -q -b ci-capturas
+          git config user.name "ci"
+          git config user.email "ci@users.noreply.github.com"
+          git add *.png
+          git commit -qm "capturas de ${GITHUB_SHA::7}"
+          git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" ci-capturas
+
   checar:
     runs-on: ubuntu-latest
     steps:
