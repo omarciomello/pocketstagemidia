@@ -279,7 +279,8 @@ class _ShowScreenState extends State<ShowScreen> {
             height: 36,
             width: 96,
             child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-              Text(aberto ? '▸ ' : '◂ ', style: TextStyle(color: aberto ? Cores.lilas : Cores.textoFraco, fontSize: 13)),
+              Icon(aberto ? Icons.chevron_right : Icons.chevron_left, size: 18, color: aberto ? Cores.lilas : Cores.textoFraco),
+              const SizedBox(width: 2),
               Text('Telão',
                   style: TextStyle(
                     color: aberto ? Cores.lilas : Cores.textoFraco,
@@ -346,11 +347,20 @@ class _ShowScreenState extends State<ShowScreen> {
       }
       final r = _tempo(s, c, aj);
       final aviso = r.aviso && !st.paused;
-      return Text(
-        r.texto,
-        textAlign: TextAlign.center,
-        style: mono(size: 19, color: aviso ? (pisca ? Cores.laranja : Cores.laranja.withValues(alpha: .35)) : Cores.ciano),
-      );
+      final cor = aviso ? (pisca ? Cores.laranja : Cores.laranja.withValues(alpha: .35)) : Cores.ciano;
+      final icone = switch (c.kind) {
+        MediaKind.image => Icons.image_outlined,
+        MediaKind.text => Icons.notes,
+        _ => null,
+      };
+      return Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+        if (icone != null) ...[Icon(icone, size: 17, color: cor), const SizedBox(width: 6)],
+        Flexible(child: Text(r.texto, maxLines: 1, overflow: TextOverflow.fade, softWrap: false, style: mono(size: 19, color: cor))),
+        if (c.loop && c.kind != MediaKind.image && c.kind != MediaKind.text) ...[
+          const SizedBox(width: 4),
+          Icon(Icons.repeat, size: 16, color: cor),
+        ],
+      ]);
     }
 
     return Column(children: [
@@ -404,14 +414,13 @@ class _ShowScreenState extends State<ShowScreen> {
     double prog;
     if (c.kind == MediaKind.image || c.kind == MediaKind.text) {
       if (c.durMs > 0) resta = c.durMs - c.posMs;
-      final pre = c.kind == MediaKind.text ? '¶ ' : '▣ ';
-      txt = pre + (resta != null && !decorrido ? '−${relogio(resta)}' : relogio(c.posMs));
+      txt = resta != null && !decorrido ? '−${relogio(resta)}' : relogio(c.posMs);
       prog = c.durMs > 0 ? c.posMs / c.durMs : 1;
     } else {
       final dur = c.durMs - ini;
       final pos = c.posMs - ini;
       if (!c.loop && dur > 0) resta = dur - pos;
-      txt = resta != null && !decorrido ? '−${relogio(resta)}' : relogio(pos) + (c.loop ? ' ↻' : '');
+      txt = resta != null && !decorrido ? '−${relogio(resta)}' : relogio(pos);
       prog = dur > 0 ? pos / dur : 0;
     }
     final w = (aj.endWarnSec * 1000).round();
@@ -551,7 +560,7 @@ class _RowGo extends StatelessWidget {
           boxShadow: atual ? const [BoxShadow(color: Color(0x4D6FD3DF), blurRadius: 18, offset: Offset(0, 4))] : null,
         ),
         alignment: Alignment.center,
-        child: Text('▶', style: TextStyle(fontSize: 17, color: atual ? Cores.tinta : Cores.textoFraco)),
+        child: Icon(Icons.play_arrow_rounded, size: 24, color: atual ? Cores.tinta : Cores.textoFraco),
       ),
     );
   }

@@ -164,7 +164,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             padding: EdgeInsets.only(top: 4),
             child: Text('relógio pisca no fim · 0 desliga', style: TextStyle(color: Cores.textoFraco, fontSize: 12)),
           ),
-          Chave('Mostrar o ▶ das linhas', valor: _s['showRowGo'] as bool, onChanged: (v) => _set('showRowGo', v)),
+          Chave('Mostrar o botão de tocar a linha', valor: _s['showRowGo'] as bool, onChanged: (v) => _set('showRowGo', v)),
         ]),
         Secao('Segurança', children: [
           Chave('Confirmar antes de Parar tudo', valor: _s['confirmStopAll'] as bool, onChanged: (v) => _set('confirmStopAll', v)),

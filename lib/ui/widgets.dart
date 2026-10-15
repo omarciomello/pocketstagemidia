@@ -40,12 +40,14 @@ class Btn extends StatelessWidget {
           child: Container(
             height: compacto ? 34 : 40,
             padding: EdgeInsets.symmetric(horizontal: compacto ? 10 : 14),
-            alignment: Alignment.center,
-            child: Row(mainAxisSize: MainAxisSize.min, children: [
+            child: Center(
+              widthFactor: 1,
+              child: Row(mainAxisSize: MainAxisSize.min, children: [
               if (icon != null) ...[Icon(icon, size: 18, color: fg), if (label.isNotEmpty) const SizedBox(width: 6)],
               if (label.isNotEmpty)
                 Text(label, style: TextStyle(color: fg, fontWeight: FontWeight.w600, fontSize: 14, letterSpacing: .2)),
-            ]),
+              ]),
+            ),
           ),
         ),
       ),

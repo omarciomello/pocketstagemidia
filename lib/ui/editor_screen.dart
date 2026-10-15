@@ -207,7 +207,7 @@ class _EditorScreenState extends State<EditorScreen> {
           const SizedBox(height: 6),
           const Text(
             'Toque num botão vazio para escolher áudio, vídeo, imagem ou texto. Cada coluna toca uma mídia por vez; '
-            'colunas diferentes tocam juntas. No show, o ▶ de cada linha para o resto e toca a linha inteira.',
+            'colunas diferentes tocam juntas. No show, o botão de tocar a linha, à esquerda, para o resto e toca a linha inteira.',
             style: TextStyle(color: Cores.textoFraco, fontSize: 13, height: 1.45),
           ),
         ]),
