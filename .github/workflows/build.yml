@@ -1,0 +1,87 @@
+name: Build
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  checar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: flutter test
+
+  android:
+    needs: checar
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: bash tool/setup_platforms.sh
+      - run: flutter build apk --release
+      - run: cp build/app/outputs/flutter-apk/app-release.apk PocketStage-Midia.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PocketStage-Midia-Android
+          path: PocketStage-Midia.apk
+
+  windows:
+    needs: checar
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: bash tool/setup_platforms.sh
+        shell: bash
+      - run: flutter build windows --release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PocketStage-Midia-Windows
+          path: build/windows/x64/runner/Release/
+
+  apple:
+    needs: checar
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: bash tool/setup_platforms.sh
+      - name: macOS
+        run: |
+          flutter build macos --release
+          cd build/macos/Build/Products/Release
+          ditto -c -k --keepParent *.app ../../../../../PocketStage-Midia-macOS.zip
+      - name: iOS (sem assinatura)
+        run: |
+          flutter build ios --release --no-codesign
+          cd build/ios/iphoneos
+          ditto -c -k --keepParent Runner.app ../../../PocketStage-Midia-iOS-sem-assinatura.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PocketStage-Midia-macOS
+          path: PocketStage-Midia-macOS.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PocketStage-Midia-iOS-sem-assinatura
+          path: PocketStage-Midia-iOS-sem-assinatura.zip

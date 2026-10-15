@@ -1,0 +1,25 @@
+# Flutter / Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+build/
+pubspec.lock
+*.iml
+.idea/
+.vscode/
+.DS_Store
+
+# Plataformas geradas pelo tool/setup_platforms.sh (exceto as configs do Firebase)
+/android/*
+!/android/app/
+/android/app/*
+!/android/app/google-services.json
+/ios/*
+!/ios/Runner/
+/ios/Runner/*
+!/ios/Runner/GoogleService-Info.plist
+/windows/
+/macos/
+/linux/
+/web/

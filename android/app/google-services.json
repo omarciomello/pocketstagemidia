@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "421400159126",
+    "project_id": "pocketstagemidia",
+    "storage_bucket": "pocketstagemidia.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:421400159126:android:653693320afd4da1bdf3b7",
+        "android_client_info": {
+          "package_name": "br.com.pocketstage.midia"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAX2jXhEjH1d98D2biK9VAQ33XM21fdwGI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
