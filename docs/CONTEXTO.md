@@ -42,7 +42,7 @@ Avançado: startSec, endSec, fadeInSec, fadeOutSec, fadeCurve (null = padrão), 
 
 ## 4. Ajustes gerais (JSON nas preferências; mesmos nomes no web)
 
-fadeIn 2, fadeOut 3, fadeCurve linear, stopAllFade 0.35, masterDb 0, retrigger parar, audioDeviceType 0 (Android), transition fade, visFade 1, textPos embaixo, textSize M, btnSize M, clockMode restante, endWarnSec 5, showRowGo true, confirmStopAll false, holdSec 1.2, lockOnOpen false, confirmExit true, tipAirplane true (tela sempre ligada é obrigatória, sem ajuste), keys {go: PageDown, prev: PageUp, stopAll, pause, blackout}.
+fadeIn 2, fadeOut 3, fadeCurve linear, stopAllFade 0.35, masterDb 0, retrigger parar, pausePreWait true (Pausar congela as pré-esperas; desligado, cancela), audioDeviceType 0 (Android), transition fade, visFade 1, textPos embaixo, textSize M, btnSize M, clockMode restante, endWarnSec 5, showRowGo true, confirmStopAll false, holdSec 1.2, lockOnOpen false, confirmExit true, tipAirplane true (tela sempre ligada é obrigatória, sem ajuste), keys {go: PageDown, prev: PageUp, stopAll, pause, blackout}.
 Uma tecla = uma ação. Atalho geral vence atalho de mídia. Restaurar padrões disponível.
 
 ## 5. Integração com o PocketStage
@@ -60,7 +60,10 @@ Build: GitHub Actions (Android, Windows, macOS; iOS em máquina macOS). O Flutte
 Repositório: github.com/omarciomello/pocketstagemidia (main). ID do app: br.com.pocketstage.midia (Android, iOS, macOS). Firebase: projeto pocketstagemidia (configs em android/app e ios/Runner; ainda sem uso).
 Núcleo: packages/pocketstage_midia_core (Engine + MediaBackend + Scheduler; ManualScheduler nos testes).
 Referência: código Kotlin (:app, :engine) e protótipo web (artifact "PocketStage Mídia").
-Decisão: Pausar congela também as pré-esperas (a especificação vence o protótipo, que cancelava).
+Decisão: Pausar congela as pré-esperas por padrão; o operador escolhe nos Ajustes (pausePreWait).
+Decisão provisória: no celular/tablet a mídia escolhida é copiada para dentro do app; no computador fica onde está.
+Nomes do núcleo: FadeCurve e ShortcutAction (Curve e GlobalKey colidem com o Flutter).
+CI: erros viram anotações do GitHub (tool/ci_run.sh); capturas das telas no ramo ci-capturas (test/capturas_test.dart).
 
 ## 7. Visual
 
@@ -68,6 +71,6 @@ Tema escuro único. Fundo #090A0F; painéis #12141C/#1E212D/#272B38; texto #E2E4
 
 ## 8. Estado e próxima fase
 
-Feito: protótipo web completo; código Kotlin de referência (nunca compilado). Flutter: (1) repositório e build no GitHub Actions com Android, Windows, macOS e iOS sem assinatura ✔; (2) núcleo em Dart com 74 testes das regras ✔.
-Próxima fase, nesta ordem: (3) telas em Flutter com painel do telão ocultável e fixo e show de exemplo embutido; (4) telão, tela sempre ligada e segundo plano em cada plataforma; (5) teste em palco em vários aparelhos (mín. um Android, um iPhone ou iPad e um computador, com tabela de aparelhos testados); (6) decisões pendentes; (7) funções de operador: verificar show, mover/copiar mídia, duplicar show, desfazer, tela de log; (8) Fase 3 com o PocketStage.
+Feito: protótipo web completo; código Kotlin de referência (nunca compilado). Flutter: (1) repositório e build no GitHub Actions com Android, Windows, macOS e iOS sem assinatura ✔; (2) núcleo em Dart com testes das regras ✔; (3) telas em Flutter: mesa com painel do telão ocultável e fixo, lista de shows, editor do show e da mídia, Ajustes, exportar/importar e show de exemplo, com som e vídeo pelo media_kit e tela sempre ligada ✔ (falta testar em aparelho).
+Próxima fase, nesta ordem: (4) telão, tela sempre ligada e segundo plano em cada plataforma; (5) teste em palco em vários aparelhos (mín. um Android, um iPhone ou iPad e um computador, com tabela de aparelhos testados); (6) decisões pendentes; (7) funções de operador: verificar show, mover/copiar mídia, duplicar show, desfazer, tela de log; (8) Fase 3 com o PocketStage.
 Riscos: telão nativo em cada sistema; pan/ganho no media_kit; iOS exige Mac e conta Apple Developer; arquivos no iOS precisam ser copiados.
