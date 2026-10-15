@@ -20,15 +20,16 @@ jobs:
         run: dart pub get
       - name: Núcleo · análise
         working-directory: packages/pocketstage_midia_core
-        run: dart analyze
+        run: bash ../../tool/ci_run.sh "core analyze" dart analyze
       - name: Núcleo · testes das regras
         working-directory: packages/pocketstage_midia_core
-        run: dart test --reporter expanded
-      - name: App · análise e testes
-        run: |
-          flutter pub get
-          flutter analyze --no-fatal-infos
-          flutter test
+        run: bash ../../tool/ci_run.sh "core test" dart test --reporter expanded
+      - name: App · dependências
+        run: bash tool/ci_run.sh "pub get" flutter pub get
+      - name: App · análise
+        run: bash tool/ci_run.sh "analyze" flutter analyze --no-fatal-infos
+      - name: App · testes
+        run: bash tool/ci_run.sh "test" flutter test
 
   android:
     needs: checar
@@ -43,8 +44,8 @@ jobs:
         with:
           channel: stable
           cache: true
-      - run: bash tool/setup_platforms.sh
-      - run: flutter build apk --release
+      - run: bash tool/ci_run.sh "setup" bash tool/setup_platforms.sh
+      - run: bash tool/ci_run.sh "build" flutter build apk --release
       - run: cp build/app/outputs/flutter-apk/app-release.apk PocketStage-Midia.apk
       - uses: actions/upload-artifact@v6
         with:
@@ -60,9 +61,9 @@ jobs:
         with:
           channel: stable
           cache: true
-      - run: bash tool/setup_platforms.sh
+      - run: bash tool/ci_run.sh "setup" bash tool/setup_platforms.sh
         shell: bash
-      - run: flutter build windows --release
+      - run: bash tool/ci_run.sh "build" flutter build windows --release
       - uses: actions/upload-artifact@v6
         with:
           name: PocketStage-Midia-Windows
@@ -77,15 +78,15 @@ jobs:
         with:
           channel: stable
           cache: true
-      - run: bash tool/setup_platforms.sh
+      - run: bash tool/ci_run.sh "setup" bash tool/setup_platforms.sh
       - name: macOS
         run: |
-          flutter build macos --release
+          bash tool/ci_run.sh "build macos" flutter build macos --release
           cd build/macos/Build/Products/Release
           ditto -c -k --keepParent *.app ../../../../../PocketStage-Midia-macOS.zip
       - name: iOS (sem assinatura)
         run: |
-          flutter build ios --release --no-codesign
+          bash tool/ci_run.sh "build ios" flutter build ios --release --no-codesign
           cd build/ios/iphoneos
           ditto -c -k --keepParent Runner.app ../../../PocketStage-Midia-iOS-sem-assinatura.zip
       - uses: actions/upload-artifact@v6
