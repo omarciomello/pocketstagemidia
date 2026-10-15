@@ -472,7 +472,12 @@ class _ShowScreenState extends State<ShowScreen> {
             if (cor != null) Positioned(left: 0, right: 0, top: 0, height: 4, child: ColoredBox(color: cor)),
             Padding(
               padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.center, children: [
+              // Em botão baixo o conteúdo é cortado em vez de estourar.
+              child: ClipRect(
+                child: OverflowBox(
+                  alignment: Alignment.centerLeft,
+                  maxHeight: double.infinity,
+                  child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
                 if (travada)
                   const Text('TRAVADA', style: TextStyle(color: Cores.vermelho, fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 1.2))
                 else if (cue.kind != MediaKind.audio)
@@ -485,7 +490,7 @@ class _ShowScreenState extends State<ShowScreen> {
                       )),
                 Text(
                   cue.name,
-                  maxLines: 2,
+                  maxLines: artista != null || cue.note.isNotEmpty ? 1 : 2,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     fontSize: tam,
@@ -501,7 +506,9 @@ class _ShowScreenState extends State<ShowScreen> {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(color: Cores.textoFraco, fontSize: 11, fontStyle: FontStyle.italic)),
-              ]),
+                  ]),
+                ),
+              ),
             ),
             if (cue.hotkey.isNotEmpty)
               Positioned(

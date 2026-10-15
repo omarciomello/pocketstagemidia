@@ -248,7 +248,11 @@ class _EditorScreenState extends State<EditorScreen> {
           if (cor != null) Positioned(left: 0, right: 0, top: 0, height: 4, child: ColoredBox(color: cor)),
           Padding(
             padding: const EdgeInsets.all(9),
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.center, children: [
+            child: ClipRect(
+              child: OverflowBox(
+                alignment: Alignment.centerLeft,
+                maxHeight: double.infinity,
+                child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text(c.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
               const SizedBox(height: 3),
               Text(
@@ -269,7 +273,9 @@ class _EditorScreenState extends State<EditorScreen> {
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(fontSize: 11, color: Cores.textoFraco),
                 ),
-            ]),
+                ]),
+              ),
+            ),
           ),
         ]),
       ),
