@@ -7,7 +7,7 @@ out=$(mktemp)
 s=$?
 cat "$out"
 if [ $s -ne 0 ]; then
-  linhas=$(grep -E '•|[Ee]rror|ERROR|FAILED|Exception|EXCEPTION|The following|overflowed|Expected|Actual|Which:|\.dart:[0-9]+|\[E\]' "$out" | grep -vE '^\s*info •|^#[0-9]+|package:flutter/|dart:async|package:flutter_test|package:stack_trace|package:test_api' | head -80)
+  linhas=$( { grep -E '(error|warning) •' "$out"; grep -E -A6 'The following|Test failed|FAILED|\[E\]|Error:' "$out"; } | grep -vE '^#[0-9]+|^--$|^═|package:flutter/|dart:async|package:flutter_test|package:stack_trace|package:test_api|^\s*$' | awk '!seen[$0]++' | head -90)
   [ -z "$linhas" ] && linhas=$(tail -60 "$out")
   msg=$(printf '%s\n' "$linhas" | sed 's/%/%25/g; s/\r//g' | awk '{printf "%s%%0A", $0}')
   echo "::error title=$titulo::$msg"
