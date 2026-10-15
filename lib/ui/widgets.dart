@@ -377,18 +377,19 @@ class Secao extends StatelessWidget {
   final List<Widget> children;
 
   @override
-  Widget build(BuildContext context) => Container(
-        margin: const EdgeInsets.only(top: 14),
-        padding: const EdgeInsets.fromLTRB(14, 4, 14, 14),
-        decoration: BoxDecoration(
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.only(top: 14),
+        child: Material(
           color: Cores.painel,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Cores.linha),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: const BorderSide(color: Cores.linha)),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(14, 4, 14, 14),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Rotulo(titulo, cor: Cores.ciano),
+              ...children,
+            ]),
+          ),
         ),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Rotulo(titulo, cor: Cores.ciano),
-          ...children,
-        ]),
       );
 }
 
