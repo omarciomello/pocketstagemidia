@@ -3,6 +3,12 @@
 Mesa de trilhas, vídeos, imagens e textos para teatro e stand-up, com telão por HDMI ou segundo monitor.
 Flutter · Android, iPhone, iPad, Windows e macOS.
 
+## Estrutura
+
+- `packages/pocketstage_midia_core/` — núcleo em Dart puro: show.json, .psshow, regras de reprodução, comandos e log, com testes.
+  O som e o telão de cada plataforma entram pela interface `MediaBackend`.
+- `lib/` — telas em Flutter.
+
 ## Build
 
 Todo push na `main` roda o GitHub Actions (aba **Actions**):

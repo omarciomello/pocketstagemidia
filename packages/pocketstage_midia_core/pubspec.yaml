@@ -1,0 +1,14 @@
+name: pocketstage_midia_core
+description: Núcleo do PocketStage Mídia — show, regras de reprodução, comandos, log e .psshow. Dart puro.
+publish_to: none
+version: 0.1.0
+
+environment:
+  sdk: ">=3.5.0 <4.0.0"
+
+dependencies:
+  archive: ">=3.6.1 <4.0.0"
+
+dev_dependencies:
+  lints: ^5.0.0
+  test: ^1.25.0
