@@ -9,11 +9,11 @@ import '../media/backend.dart';
 import '../theme.dart';
 
 class _Camada {
-  _Camada(this.id, this.child, {this.opacity = 0, this.ms = 0});
+  _Camada(this.id, this.child, {this.opacity = 0});
   final int id;
   final Widget child;
   double opacity;
-  int ms;
+  int ms = 0;
   bool saindo = false;
 }
 
