@@ -24,4 +24,11 @@ troca ios/Runner/Info.plist '(<key>CFBundleDisplayName<\/key>\s*<string>)[^<]*' 
 
 troca macos/Runner/Configs/AppInfo.xcconfig 'PRODUCT_BUNDLE_IDENTIFIER = .*' "PRODUCT_BUNDLE_IDENTIFIER = $ID"
 
+# macOS: abrir e salvar arquivos escolhidos pelo operador
+for f in macos/Runner/DebugProfile.entitlements macos/Runner/Release.entitlements; do
+  [ -f "$f" ] || continue
+  grep -q 'files.user-selected.read-write' "$f" || \
+    perl -0pi -e 's#</dict>\s*</plist>#\t<key>com.apple.security.files.user-selected.read-write</key>\n\t<true/>\n</dict>\n</plist>#' "$f"
+done
+
 echo "Plataformas prontas: $ID"

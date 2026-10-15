@@ -47,7 +47,7 @@ void main() {
       final c = Cue.fromJson(j);
       expect(c.kind, MediaKind.audio);
       expect(c.role, Role.entrada);
-      expect(c.fadeCurve, Curve.suave);
+      expect(c.fadeCurve, FadeCurve.suave);
       expect(c.followMode, FollowMode.tempo);
       expect(c.transition, Transition.preto);
       expect(c.stopCols, [1, 2]);
@@ -183,8 +183,10 @@ void main() {
       expect(s.visualFadeSec, 1);
       expect(s.endWarnSec, 5);
       expect(s.holdSec, 1.2);
-      expect(s.key(GlobalKey.go), 'PageDown');
-      expect(s.key(GlobalKey.prev), 'PageUp');
+      expect(s.pauseHoldsPreWait, isTrue);
+      expect(Settings.fromJson({'pausePreWait': false}).pauseHoldsPreWait, isFalse);
+      expect(s.key(ShortcutAction.go), 'PageDown');
+      expect(s.key(ShortcutAction.prev), 'PageUp');
       expect(s.toJson().containsKey('keepAwake'), isFalse, reason: 'tela sempre ligada é obrigatória');
     });
 
@@ -231,11 +233,11 @@ void main() {
     });
 
     test('curvas', () {
-      expect(fadeShape(Curve.linear, 0.5, true), 0.5);
-      expect(fadeShape(Curve.suave, 0, true), 0);
-      expect(fadeShape(Curve.suave, 1, true), closeTo(1, 1e-12));
-      expect(fadeShape(Curve.suave, 0.5, true), greaterThan(0.5));
-      expect(fadeShape(Curve.suave, 0.5, false), lessThan(0.5));
+      expect(fadeShape(FadeCurve.linear, 0.5, true), 0.5);
+      expect(fadeShape(FadeCurve.suave, 0, true), 0);
+      expect(fadeShape(FadeCurve.suave, 1, true), closeTo(1, 1e-12));
+      expect(fadeShape(FadeCurve.suave, 0.5, true), greaterThan(0.5));
+      expect(fadeShape(FadeCurve.suave, 0.5, false), lessThan(0.5));
     });
   });
 }

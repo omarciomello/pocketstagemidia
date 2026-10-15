@@ -118,15 +118,15 @@ enum TextSize {
 }
 
 /// Curva do fade de som.
-enum Curve {
+enum FadeCurve {
   linear('linear', 'Linear'),
   suave('suave', 'Suave');
 
-  const Curve(this.key, this.label);
+  const FadeCurve(this.key, this.label);
   final String key;
   final String label;
 
-  static Curve from(String? k) =>
+  static FadeCurve from(String? k) =>
       values.firstWhere((e) => e.key == k, orElse: () => linear);
 }
 
@@ -200,14 +200,14 @@ enum Retrigger {
 }
 
 /// Ações dos atalhos gerais (teclado ou pedal).
-enum GlobalKey {
+enum ShortcutAction {
   go('go', 'Próxima linha (GO)'),
   prev('prev', 'Linha anterior'),
   stopAll('stopAll', 'Parar tudo'),
   pause('pause', 'Pausar / Retomar'),
   blackout('blackout', 'Apagar telão');
 
-  const GlobalKey(this.key, this.label);
+  const ShortcutAction(this.key, this.label);
   final String key;
   final String label;
 }
@@ -268,7 +268,7 @@ class Cue {
   final double? fadeOutSec;
 
   /// null = curva dos Ajustes.
-  final Curve? fadeCurve;
+  final FadeCurve? fadeCurve;
 
   /// −1 esquerda, 0 centro, 1 direita.
   final double pan;
@@ -422,7 +422,7 @@ class Cue {
         endSec: endSec ?? this.endSec,
         fadeInSec: identical(fadeInSec, _keep) ? this.fadeInSec : fadeInSec as double?,
         fadeOutSec: identical(fadeOutSec, _keep) ? this.fadeOutSec : fadeOutSec as double?,
-        fadeCurve: identical(fadeCurve, _keep) ? this.fadeCurve : fadeCurve as Curve?,
+        fadeCurve: identical(fadeCurve, _keep) ? this.fadeCurve : fadeCurve as FadeCurve?,
         pan: pan ?? this.pan,
         repeat: repeat ?? this.repeat,
         duckDb: duckDb ?? this.duckDb,
@@ -524,7 +524,7 @@ class Cue {
       endSec: max(0.0, _d(o, 'endSec', 0)),
       fadeInSec: _dn(o, 'fadeInSec'),
       fadeOutSec: _dn(o, 'fadeOutSec'),
-      fadeCurve: _sn(o, 'fadeCurve') == null ? null : Curve.from(_sn(o, 'fadeCurve')),
+      fadeCurve: _sn(o, 'fadeCurve') == null ? null : FadeCurve.from(_sn(o, 'fadeCurve')),
       pan: _d(o, 'pan', 0).clamp(-1, 1).toDouble(),
       repeat: max(0, _i(o, 'repeat', 0)),
       duckDb: min(0.0, _d(o, 'duckDb', 0)),
@@ -739,7 +739,7 @@ class Settings {
   // som
   final double fadeInSec;
   final double fadeOutSec;
-  final Curve fadeCurve;
+  final FadeCurve fadeCurve;
 
   /// Fade do "Parar tudo".
   final double stopAllFadeSec;
@@ -747,6 +747,9 @@ class Settings {
   /// Volume geral, de −60 (mudo) a 0 dB.
   final double masterDb;
   final Retrigger retrigger;
+
+  /// Pausar congela as pré-esperas (true) ou cancela (false).
+  final bool pauseHoldsPreWait;
 
   /// Saída de áudio no Android (AudioDeviceInfo.TYPE_*). 0 = automático.
   final int audioDeviceType;
@@ -775,7 +778,7 @@ class Settings {
   final bool confirmExit;
   final bool tipAirplane;
 
-  /// Atalhos gerais: ação (GlobalKey.key) → tecla.
+  /// Atalhos gerais: ação (ShortcutAction.key) → tecla.
   final Map<String, String> keys;
 
   static const Map<String, String> defaultKeys = {'go': 'PageDown', 'prev': 'PageUp'};
@@ -783,10 +786,11 @@ class Settings {
   const Settings({
     this.fadeInSec = 2,
     this.fadeOutSec = 3,
-    this.fadeCurve = Curve.linear,
+    this.fadeCurve = FadeCurve.linear,
     this.stopAllFadeSec = 0.35,
     this.masterDb = 0,
     this.retrigger = Retrigger.parar,
+    this.pauseHoldsPreWait = true,
     this.audioDeviceType = 0,
     this.transition = Transition.fade,
     this.visualFadeSec = 1,
@@ -804,7 +808,7 @@ class Settings {
     this.keys = defaultKeys,
   });
 
-  String key(GlobalKey k) => keys[k.key] ?? '';
+  String key(ShortcutAction k) => keys[k.key] ?? '';
 
   Map<String, dynamic> toJson() => {
         'fadeIn': fadeInSec,
@@ -813,6 +817,7 @@ class Settings {
         'stopAllFade': stopAllFadeSec,
         'masterDb': masterDb,
         'retrigger': retrigger.key,
+        'pausePreWait': pauseHoldsPreWait,
         'audioDeviceType': audioDeviceType,
         'transition': transition.key,
         'visFade': visualFadeSec,
@@ -844,10 +849,11 @@ class Settings {
     return Settings(
       fadeInSec: f('fadeIn', d.fadeInSec, 0, 10),
       fadeOutSec: f('fadeOut', d.fadeOutSec, 0, 10),
-      fadeCurve: Curve.from(_sn(o, 'fadeCurve')),
+      fadeCurve: FadeCurve.from(_sn(o, 'fadeCurve')),
       stopAllFadeSec: f('stopAllFade', d.stopAllFadeSec, 0, 5),
       masterDb: f('masterDb', 0, -60, 0),
       retrigger: Retrigger.from(_sn(o, 'retrigger')),
+      pauseHoldsPreWait: _b(o, 'pausePreWait', true),
       audioDeviceType: _i(o, 'audioDeviceType', 0),
       transition: Transition.from(_sn(o, 'transition')),
       visualFadeSec: f('visFade', d.visualFadeSec, 0, 5),

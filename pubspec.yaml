@@ -11,6 +11,13 @@ dependencies:
     sdk: flutter
   pocketstage_midia_core:
     path: packages/pocketstage_midia_core
+  media_kit: ^1.1.11
+  media_kit_video: ^1.2.5
+  media_kit_libs_video: ^1.0.5
+  path_provider: ^2.1.4
+  file_picker: ">=8.1.2 <12.0.0"
+  share_plus: ^10.1.4
+  wakelock_plus: ^1.2.8
 
 dev_dependencies:
   flutter_test:
@@ -19,6 +26,8 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/sample/
   fonts:
     - family: Archivo
       fonts:

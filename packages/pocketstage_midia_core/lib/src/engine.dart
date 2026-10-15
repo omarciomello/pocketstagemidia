@@ -223,6 +223,13 @@ class Engine {
     _changed();
   }
 
+  /// Fecha o show: para tudo na hora e fica sem show.
+  void unloadShow() {
+    hardStop();
+    _show = null;
+    _changed();
+  }
+
   /// Troca os ajustes gerais.
   void setSettings(Settings s) {
     _settings = s;
@@ -289,7 +296,7 @@ class Engine {
   double _fadeInSec(Cue c) => c.fadeIn ? (c.fadeInSec ?? _settings.fadeInSec) : 0;
   double _fadeOutSec(Cue c) => c.fadeOut ? (c.fadeOutSec ?? _settings.fadeOutSec) : 0;
   int _transMs(Cue c) => _ms(c.transSec ?? _settings.visualFadeSec);
-  Curve _curveOf(Cue c) => c.fadeCurve ?? _settings.fadeCurve;
+  FadeCurve _curveOf(Cue c) => c.fadeCurve ?? _settings.fadeCurve;
   Transition _transOf(Cue c) => c.transition ?? _settings.transition;
 
   /// Como a mídia visual entra: sem "Entra com fade" é corte.
@@ -560,8 +567,12 @@ class Engine {
     for (final pb in _fading.toList()) {
       _dispose(pb);
     }
-    for (final w in _waiting.values) {
-      w.freeze();
+    if (_settings.pauseHoldsPreWait) {
+      for (final w in _waiting.values) {
+        w.freeze();
+      }
+    } else {
+      _clearWaiting();
     }
     final now = _s.nowMs;
     for (final pb in _columns) {
@@ -752,7 +763,7 @@ class Engine {
     if (wasFading) _changed();
   }
 
-  void _fadeEnv(_Pb pb, double from, double to, double sec, Curve curve, void Function()? end,
+  void _fadeEnv(_Pb pb, double from, double to, double sec, FadeCurve curve, void Function()? end,
       {bool ignorePause = false}) {
     pb.fade?.cancel();
     final up = to >= from;

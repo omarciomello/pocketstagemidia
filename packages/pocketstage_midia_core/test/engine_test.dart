@@ -272,6 +272,18 @@ void main() {
       expect(h.st.waitingMs, isEmpty);
     });
 
+    test('com o ajuste desligado, pausar cancela a pré-espera', () {
+      final h = H(settings: const Settings(pauseHoldsPreWait: false))
+        ..load({0: audio('a1').copyWith(preWaitSec: 3)});
+      h.go('a1');
+      h.run(1000);
+      h.e.dispatch(const Pause());
+      expect(h.st.waitingMs, isEmpty);
+      h.e.dispatch(const Resume());
+      h.run(5000);
+      expect(h.be.players, isEmpty);
+    });
+
     test('congela o tempo na tela e os players', () {
       final h = H()..load({0: image('i1').copyWith(autoStopSec: 5), 1: audio('a1')});
       h.go('i1');
@@ -510,6 +522,16 @@ void main() {
       expect(h.be.visual, isNull);
       expect(h.st.usedCueIds, isEmpty);
       expect(h.st.columns.every((c) => c == null), isTrue);
+    });
+
+    test('fechar o show para tudo e fica sem show', () {
+      final h = H()..load({0: audio('a1')});
+      h.go('a1');
+      h.e.unloadShow();
+      expect(h.e.show, isNull);
+      expect(h.be.last('a1').disposed, isTrue);
+      h.go('a1');
+      expect(h.msgs.last, 'Nenhum show carregado.');
     });
 
     test('o estado vira JSON', () {

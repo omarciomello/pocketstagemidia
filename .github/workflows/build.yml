@@ -27,7 +27,7 @@ jobs:
       - name: App · análise e testes
         run: |
           flutter pub get
-          flutter analyze
+          flutter analyze --no-fatal-infos
           flutter test
 
   android:

@@ -17,7 +17,7 @@ void main() {
 
   test('atalho geral vence atalho de mídia', () {
     final a = resolveKey('PageDown', const Settings(), show);
-    expect(a, isA<GlobalKeyAction>().having((x) => x.key, 'key', GlobalKey.go));
+    expect(a, isA<GlobalKeyAction>().having((x) => x.key, 'key', ShortcutAction.go));
   });
 
   test('botões fora da quantidade em uso não respondem', () {
