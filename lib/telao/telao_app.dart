@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:pocketstage_midia_core/pocketstage_midia_core.dart';
 
 import '../media/android_player.dart';
+import '../theme.dart';
 import '../media/backend.dart';
 import '../ui/stage_view.dart';
 import 'canal.dart';
@@ -122,6 +123,7 @@ class _TelaoAppState extends State<TelaoApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
+      theme: temaPocketStage(),
       home: Scaffold(
         backgroundColor: Colors.black,
         body: SizedBox.expand(child: StageView(stage: _stage, mostrarApagado: false)),
