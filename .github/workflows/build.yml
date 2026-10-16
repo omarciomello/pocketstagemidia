@@ -145,7 +145,7 @@ jobs:
             $p = Start-Process $exe.FullName -PassThru
             # 4s: clique no 1º sinal (antes do telão) · 6s: abre o telão · 11s e 15s: cliques · 19s: Parar tudo
             $plano = @{ 4 = @(145, 170); 11 = @(145, 170); 15 = @(145, 265); 19 = @(935, 56) }
-            foreach ($s in 3, 4, 6, 7, 8, 11, 12, 15, 19, 21, 24, 27) {
+            foreach ($s in 3, 4, 8, 9, 11, 12, 15, 19, 21, 24, 27) {
               $falta = $s - ((Get-Date) - $p.StartTime).TotalSeconds
               if ($falta -gt 0) { Start-Sleep -Milliseconds ([int]($falta * 1000)) }
               $m = [Win]::Achar([uint32]$p.Id, "pocketstage_midia")
