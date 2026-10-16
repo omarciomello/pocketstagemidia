@@ -8,14 +8,18 @@ import 'package:pocketstage_midia_core/pocketstage_midia_core.dart';
 import 'data/sample.dart';
 import 'data/store.dart';
 import 'media/backend.dart';
+import 'telao/externo.dart';
 
 /// Estado do app: shows salvos, show em uso, ajustes e o motor.
 class AppState extends ChangeNotifier {
-  AppState._(this.store, this.stage, this.engine, this._tvOpen);
+  AppState._(this.store, this.stage, this.engine, this._tvOpen, [this.telao]);
 
   final Store store;
   final StageController stage;
   final Engine engine;
+
+  /// Telão externo (HDMI no Android); null onde ainda não há.
+  final TelaoExterno? telao;
 
   List<Show> shows = [];
   bool _tvOpen;
@@ -44,8 +48,12 @@ class AppState extends ChangeNotifier {
   static Future<AppState> create() async {
     final store = await Store.open();
     final stage = StageController();
-    final engine = Engine(backend: MediaKitBackend(stage), settings: store.loadSettings());
-    final s = AppState._(store, stage, engine, store.tvOpen);
+    final telao = TelaoExterno(stage);
+    final backend = MediaKitBackend(stage);
+    backend.videoExterno = (cue, onEnd, onError) => telao.ativo ? telao.abrirVideo(cue, onEnd, onError) : null;
+    final engine = Engine(backend: backend, settings: store.loadSettings());
+    final s = AppState._(store, stage, engine, store.tvOpen, telao);
+    telao.onAviso = s.toast;
     await s._init();
     return s;
   }

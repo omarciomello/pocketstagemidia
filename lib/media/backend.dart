@@ -146,13 +146,20 @@ class MkPlayer implements MediaPlayer {
 
 /// Backend das plataformas: media_kit para som e vídeo, [StageController] para o telão.
 class MediaKitBackend implements MediaBackend {
-  MediaKitBackend(this.stage);
+  MediaKitBackend(this.stage, {this.videoExterno});
 
   final StageController stage;
+
+  /// Quando há telão externo, o vídeo toca nele (a mesa só controla).
+  MediaPlayer? Function(Cue cue, void Function() onEnd, void Function() onError)? videoExterno;
 
   @override
   MediaPlayer? open(Cue cue, {required void Function() onEnd, required void Function() onError}) {
     if (cue.uri.isEmpty) return null;
+    if (cue.kind == MediaKind.video) {
+      final ext = videoExterno?.call(cue, onEnd, onError);
+      if (ext != null) return ext;
+    }
     try {
       return MkPlayer.create(cue, onEnd, onError);
     } catch (_) {

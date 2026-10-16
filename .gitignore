@@ -15,6 +15,13 @@ pubspec.lock
 !/android/app/
 /android/app/*
 !/android/app/google-services.json
+!/android/app/src/
+/android/app/src/*
+!/android/app/src/main/
+/android/app/src/main/*
+!/android/app/src/main/kotlin/
+/android/app/src/main/kotlin/*
+!/android/app/src/main/kotlin/br/
 /ios/*
 !/ios/Runner/
 /ios/Runner/*

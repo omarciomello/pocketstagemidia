@@ -136,6 +136,19 @@ class _StageViewState extends State<StageView> {
   Widget _visual(core.StageVisual v) {
     final fit = v.cue.fit == core.Fit.cover ? BoxFit.cover : BoxFit.contain;
     final p = v.player;
+    if (v.cue.kind == core.MediaKind.video && !(p is MkPlayer && p.video != null)) {
+      return ColoredBox(
+        color: const Color(0xFF0B0C12),
+        child: Center(
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            const Text('VÍDEO NO TELÃO',
+                style: TextStyle(color: Cores.lilas, fontWeight: FontWeight.w800, letterSpacing: 2, fontSize: 11)),
+            const SizedBox(height: 4),
+            Text(v.cue.name, style: const TextStyle(color: Cores.texto, fontWeight: FontWeight.w700)),
+          ]),
+        ),
+      );
+    }
     if (p is MkPlayer && p.video != null) {
       return Video(
         controller: p.video!,

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -221,6 +222,23 @@ class _ShowScreenState extends State<ShowScreen> {
         Expanded(
           child: Text(s?.name ?? '', overflow: TextOverflow.ellipsis, style: const TextStyle(color: Cores.textoFraco, fontSize: 13)),
         ),
+        if (app.telao != null && Platform.isAndroid)
+          ListenableBuilder(
+            listenable: app.telao!,
+            builder: (_, __) {
+              final n = app.telao!.conectado;
+              return Container(
+                margin: const EdgeInsets.only(right: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  border: Border.all(color: n != null ? Cores.lilas : Cores.linha),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(n != null ? 'TELÃO $n' : 'SEM TELÃO',
+                    style: mono(size: 11, color: n != null ? Cores.lilas : Cores.textoFraco, weight: FontWeight.w700)),
+              );
+            },
+          ),
         if (s != null && st.locked)
           HoldButton(
             label: 'Segure para desbloquear',

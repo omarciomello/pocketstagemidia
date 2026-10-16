@@ -24,6 +24,31 @@ troca ios/Runner/Info.plist '(<key>CFBundleDisplayName<\/key>\s*<string>)[^<]*' 
 
 troca macos/Runner/Configs/AppInfo.xcconfig 'PRODUCT_BUNDLE_IDENTIFIER = .*' "PRODUCT_BUNDLE_IDENTIFIER = $ID"
 
+# Android: a mesa nativa é br.com.pocketstage.midia.MainActivity (telão HDMI + serviço de palco)
+find android/app/src/main/kotlin android/app/src/main/java -name 'MainActivity.*' 2>/dev/null \
+  | grep -v 'br/com/pocketstage/midia/' | xargs -r rm -f
+MAN=android/app/src/main/AndroidManifest.xml
+troca "$MAN" 'android:name="\.MainActivity"' 'android:name="br.com.pocketstage.midia.MainActivity"'
+if ! grep -q 'ServicoPalco' "$MAN"; then
+  perl -0pi -e 's#<application#<uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>\n    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"/>\n    <uses-permission android:name="android.permission.WAKE_LOCK"/>\n    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>\n    <application#' "$MAN"
+  perl -0pi -e 's#</application>#    <service android:name="br.com.pocketstage.midia.ServicoPalco" android:exported="false" android:foregroundServiceType="mediaPlayback"/>\n    </application>#' "$MAN"
+fi
+
+# Android: assinatura fixa, se o segredo PSM_KEYSTORE_B64 existir no GitHub
+GR=android/app/build.gradle.kts
+if [ -n "${PSM_KEYSTORE_B64:-}" ] && [ -f "$GR" ] && ! grep -q 'create("psm")' "$GR"; then
+  printf '%s' "$PSM_KEYSTORE_B64" | base64 -d > android/app/psm.jks
+  perl -0pi -e 's#(\n\s*buildTypes\s*\{)#\n    signingConfigs {\n        create("psm") {\n            storeFile = file("psm.jks")\n            storePassword = System.getenv("PSM_KEY_PASSWORD")\n            keyAlias = "psm"\n            keyPassword = System.getenv("PSM_KEY_PASSWORD")\n        }\n    }$1#' "$GR"
+  perl -0pi -e 's#signingConfig = signingConfigs\.getByName\("debug"\)#signingConfig = signingConfigs.getByName("psm")#' "$GR"
+  echo "Assinatura fixa aplicada."
+fi
+
+# iOS: som em segundo plano
+PL=ios/Runner/Info.plist
+if [ -f "$PL" ] && ! grep -q 'UIBackgroundModes' "$PL"; then
+  perl -0pi -e 's#</dict>\s*</plist>#\t<key>UIBackgroundModes</key>\n\t<array>\n\t\t<string>audio</string>\n\t</array>\n</dict>\n</plist>#' "$PL"
+fi
+
 # macOS: abrir e salvar arquivos escolhidos pelo operador
 for f in macos/Runner/DebugProfile.entitlements macos/Runner/Release.entitlements; do
   [ -f "$f" ] || continue
