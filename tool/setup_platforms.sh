@@ -54,6 +54,20 @@ if [ -f "$PL" ] && ! grep -q 'UIBackgroundModes' "$PL"; then
   perl -0pi -e 's#</dict>\s*</plist>#\t<key>UIBackgroundModes</key>\n\t<array>\n\t\t<string>audio</string>\n\t</array>\n</dict>\n</plist>#' "$PL"
 fi
 
+# Computador: a janela do telão também carrega os plugins (media_kit, window_manager…)
+FW=windows/runner/flutter_window.cpp
+if [ -f "$FW" ] && ! grep -q 'DesktopMultiWindowSetWindowCreatedCallback' "$FW"; then
+  perl -0pi -e 's|(#include "flutter_window.h"\n)|$1#include "desktop_multi_window/desktop_multi_window_plugin.h"\n|' "$FW"
+  perl -0pi -e 's|(RegisterPlugins\(flutter_controller_->engine\(\)\);\n)|$1  DesktopMultiWindowSetWindowCreatedCallback([](void *controller) {\n    auto *flutter_view_controller = reinterpret_cast<flutter::FlutterViewController *>(controller);\n    RegisterPlugins(flutter_view_controller->engine());\n  });\n|' "$FW"
+  grep -q 'DesktopMultiWindowSetWindowCreatedCallback' "$FW" || { echo "ERRO: não consegui ajustar $FW"; exit 1; }
+fi
+MW=macos/Runner/MainFlutterWindow.swift
+if [ -f "$MW" ] && ! grep -q 'FlutterMultiWindowPlugin' "$MW"; then
+  perl -0pi -e 's|(import FlutterMacOS\n)|$1import desktop_multi_window\n|' "$MW"
+  perl -0pi -e 's|(RegisterGeneratedPlugins\(registry: flutterViewController\)\n)|$1    FlutterMultiWindowPlugin.setOnWindowCreatedCallback { controller in\n      RegisterGeneratedPlugins(registry: controller)\n    }\n|' "$MW"
+  grep -q 'FlutterMultiWindowPlugin' "$MW" || { echo "ERRO: não consegui ajustar $MW"; exit 1; }
+fi
+
 # macOS: abrir e salvar arquivos escolhidos pelo operador
 for f in macos/Runner/DebugProfile.entitlements macos/Runner/Release.entitlements; do
   [ -f "$f" ] || continue

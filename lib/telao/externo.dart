@@ -6,6 +6,7 @@ import 'package:pocketstage_midia_core/pocketstage_midia_core.dart';
 import '../media/android_player.dart';
 import '../media/backend.dart';
 import 'canal.dart';
+import 'transporte.dart';
 
 /// Vídeo que toca no telão externo. A mesa controla; o telão toca e informa a posição.
 class RemotePlayer implements MediaPlayer {
@@ -69,8 +70,12 @@ class RemotePlayer implements MediaPlayer {
 /// Mesa: liga o telão externo (HDMI no Android) ao [StageController].
 class TelaoExterno extends ChangeNotifier {
   TelaoExterno(this.stage) {
-    if (!Platform.isAndroid) return;
-    _canal.eventos.listen(_evento);
+    final TransporteMesa? t = Platform.isAndroid
+        ? CanalTelao.instancia
+        : (Platform.isWindows || Platform.isMacOS ? (janela = JanelaTelao()) : null);
+    if (t == null) return;
+    _canal = t;
+    t.eventos.listen(_evento);
     _canal.mensagens.listen(_mensagem);
     _canal.erros.listen((e) => onAviso?.call(e));
     stage.addListener(_mudou);
@@ -80,7 +85,13 @@ class TelaoExterno extends ChangeNotifier {
   }
 
   final StageController stage;
-  final CanalTelao _canal = CanalTelao.instancia;
+  late final TransporteMesa _canal;
+
+  /// Computador: a janela do telão (abrir/fechar pelo painel).
+  JanelaTelao? janela;
+
+  /// Há como ter telão nesta plataforma.
+  bool get disponivel => Platform.isAndroid || janela != null;
 
   /// Resolução do telão ("1920×1080") ou null sem telão.
   String? conectado;
@@ -97,9 +108,9 @@ class TelaoExterno extends ChangeNotifier {
 
   bool get ativo => conectado != null;
 
-  Future<String> diagnostico() => _canal.diagnostico();
+  Future<String> diagnostico() => CanalTelao.instancia.diagnostico();
 
-  Future<void> reconectar() => _canal.reconectar();
+  Future<void> reconectar() => CanalTelao.instancia.reconectar();
 
   void _enviar(Map<String, dynamic> m) {
     if (ativo) _canal.enviar(m);

@@ -19,6 +19,13 @@ dependencies:
   share_plus: ^10.1.4
   wakelock_plus: ^1.2.8
   audio_session: ^0.1.21
+  desktop_multi_window: ^0.3.1
+  screen_retriever: ^0.2.0
+  window_manager:
+    git:
+      url: https://github.com/boyan01/window_manager.git
+      path: packages/window_manager
+      ref: 6fae92d21b4c80ce1b8f71c1190d7970cf722bd4
 
 dev_dependencies:
   flutter_test:

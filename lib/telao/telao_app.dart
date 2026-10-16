@@ -7,6 +7,7 @@ import '../media/android_player.dart';
 import '../media/backend.dart';
 import '../ui/stage_view.dart';
 import 'canal.dart';
+import 'transporte.dart';
 
 /// Vídeo nativo (Android) desenhado numa textura deste telão.
 class _VideoNoTelao implements MediaPlayer, VideoTextura {
@@ -30,7 +31,12 @@ class _VideoNoTelao implements MediaPlayer, VideoTextura {
 
 /// O app que roda no monitor externo: só o palco, em tela cheia.
 class TelaoApp extends StatefulWidget {
-  const TelaoApp({super.key});
+  TelaoApp({super.key, TransporteTelao? transporte, this.onFechar}) : transporte = transporte ?? CanalTelao.instancia;
+
+  final TransporteTelao transporte;
+
+  /// Computador: a mesa pediu para fechar a janela do telão.
+  final VoidCallback? onFechar;
 
   @override
   State<TelaoApp> createState() => _TelaoAppState();
@@ -40,7 +46,7 @@ class _TelaoAppState extends State<TelaoApp> {
   final StageController _stage = StageController();
   final Map<int, MkPlayer> _players = {};
   final Map<int, _VideoNoTelao> _nativos = {};
-  final CanalTelao _canal = CanalTelao.instancia;
+  late final TransporteTelao _canal = widget.transporte;
   StreamSubscription<Map<String, dynamic>>? _sub;
   Timer? _pos;
 
@@ -70,6 +76,8 @@ class _TelaoAppState extends State<TelaoApp> {
   void _msg(Map<String, dynamic> m) {
     final id = m['id'] is num ? (m['id'] as num).toInt() : -1;
     switch (m['t']) {
+      case 'fechar':
+        widget.onFechar?.call();
       case 'open':
         final cue = Cue.fromJson(Map<String, dynamic>.from(m['cue'] as Map));
         _players[id] = MkPlayer.create(

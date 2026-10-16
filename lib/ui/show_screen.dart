@@ -287,7 +287,7 @@ class _ShowScreenState extends State<ShowScreen> {
               );
             },
           ),
-        if (app.telao != null && Platform.isAndroid)
+        if (app.telao?.disponivel == true)
           ListenableBuilder(
             listenable: app.telao!,
             builder: (_, __) {
@@ -406,8 +406,21 @@ class _ShowScreenState extends State<ShowScreen> {
       Btn('Apagar telão',
           onTap: (st.screenCueId != null || st.textCueId != null) && !st.locked ? () => app.dispatch(const Blackout()) : null),
       const SizedBox(height: 8),
-      Btn('Telão em tela cheia',
-          onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => TelaoCheio(stage: app.stage)))),
+      if (app.telao?.janela != null)
+        ListenableBuilder(
+          listenable: app.telao!,
+          builder: (_, __) {
+            final t = app.telao!;
+            return Btn(
+              t.ativo ? 'Fechar telão' : 'Abrir telão no 2º monitor',
+              tipo: t.ativo ? BtnTipo.ligado : BtnTipo.normal,
+              onTap: () => t.ativo ? t.janela!.fechar() : t.janela!.abrir(),
+            );
+          },
+        )
+      else
+        Btn('Telão em tela cheia',
+            onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => TelaoCheio(stage: app.stage)))),
     ]);
   }
 

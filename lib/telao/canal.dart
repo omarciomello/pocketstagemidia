@@ -3,9 +3,11 @@ import 'dart:convert';
 
 import 'package:flutter/services.dart';
 
+import 'transporte.dart';
+
 /// Canal "psm/telao" entre a mesa e o telão externo (Android).
 /// Os dois lados usam a mesma classe: cada mensagem é um JSON.
-class CanalTelao {
+class CanalTelao implements TransporteMesa, TransporteTelao {
   CanalTelao._() {
     _c.setMethodCallHandler((call) async {
       switch (call.method) {
@@ -31,6 +33,7 @@ class CanalTelao {
   final StreamController<String> _erros = StreamController.broadcast();
 
   /// Mesa: erros ao abrir o telão.
+  @override
   Stream<String> get erros => _erros.stream;
 
   /// Mesa: lista das telas que o aparelho informa (para descobrir problemas).
@@ -50,16 +53,20 @@ class CanalTelao {
   }
 
   /// Mensagens vindas do outro lado.
+  @override
   Stream<Map<String, dynamic>> get mensagens => _msgs.stream;
 
   /// Mesa: nome do telão ao conectar (ex.: "1920×1080"), null ao desconectar.
+  @override
   Stream<String?> get eventos => _eventos.stream;
 
+  @override
   void enviar(Map<String, dynamic> m) {
     _c.invokeMethod<void>('enviar', jsonEncode(m)).catchError((_) {});
   }
 
   /// Mesa: telão já conectado ao abrir o app.
+  @override
   Future<String?> estado() async {
     try {
       return await _c.invokeMethod<String>('estado');
@@ -69,6 +76,7 @@ class CanalTelao {
   }
 
   /// Telão: avisa que já está ouvindo.
+  @override
   Future<void> pronto() async {
     try {
       await _c.invokeMethod<void>('pronto');

@@ -1,18 +1,31 @@
+import 'dart:io';
+
 import 'package:audio_session/audio_session.dart';
+import 'package:desktop_multi_window/desktop_multi_window.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:media_kit/media_kit.dart';
+import 'package:screen_retriever/screen_retriever.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
+import 'package:window_manager/window_manager.dart';
 
 import 'state.dart';
 import 'telao/telao_app.dart';
+import 'telao/transporte.dart';
 import 'theme.dart';
 import 'ui/show_screen.dart';
 import 'ui/shows_screen.dart';
 
-Future<void> main() async {
+Future<void> main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
   MediaKit.ensureInitialized();
+  // Computador: esta pode ser a janela do telão.
+  if (Platform.isWindows || Platform.isMacOS) {
+    try {
+      final w = await WindowController.fromCurrentEngine();
+      if (w.arguments == 'telao') return telaoDesktop();
+    } catch (_) {}
+  }
   // A tela nunca apaga com o app aberto (obrigatório).
   try {
     await WakelockPlus.enable();
@@ -32,7 +45,54 @@ Future<void> main() async {
 void telaoMain() {
   WidgetsFlutterBinding.ensureInitialized();
   MediaKit.ensureInitialized();
-  runApp(const TelaoApp());
+  runApp(TelaoApp());
+}
+
+class _AoFechar with WindowListener {
+  _AoFechar(this.t);
+  final TransporteTelao t;
+
+  @override
+  void onWindowClose() async {
+    t.enviar({'t': 'fechou'});
+    await windowManager.destroy();
+  }
+}
+
+/// Computador: janela do telão, em tela cheia no segundo monitor (ou no único, se só houver um).
+Future<void> telaoDesktop() async {
+  await windowManager.ensureInitialized();
+  Display alvo;
+  try {
+    final telas = await screenRetriever.getAllDisplays();
+    final principal = await screenRetriever.getPrimaryDisplay();
+    alvo = telas.firstWhere((d) => d.id != principal.id, orElse: () => principal);
+  } catch (_) {
+    alvo = await screenRetriever.getPrimaryDisplay();
+  }
+  final pos = alvo.visiblePosition ?? Offset.zero;
+  final tam = alvo.size;
+  final nome = '${(tam.width * (alvo.scaleFactor ?? 1)).round()}×${(tam.height * (alvo.scaleFactor ?? 1)).round()} · janela';
+  final t = JanelaTelaoLado(nome);
+  const opcoes = WindowOptions(
+    title: 'PocketStage Mídia · Telão',
+    backgroundColor: Colors.black,
+    titleBarStyle: TitleBarStyle.hidden,
+  );
+  await windowManager.waitUntilReadyToShow(opcoes, () async {
+    await windowManager.setBounds(Rect.fromLTWH(pos.dx, pos.dy, tam.width, tam.height));
+    await windowManager.show();
+    await windowManager.setFullScreen(true);
+  });
+  await windowManager.setPreventClose(true);
+  windowManager.addListener(_AoFechar(t));
+  runApp(TelaoApp(
+    transporte: t,
+    onFechar: () async {
+      t.enviar({'t': 'fechou'});
+      await windowManager.destroy();
+    },
+  ));
 }
 
 class PocketStageMidia extends StatelessWidget {
