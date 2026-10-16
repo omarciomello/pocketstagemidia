@@ -87,9 +87,22 @@ class AppState extends ChangeNotifier {
     stage.onImageError = (id) => scheduleMicrotask(() => engine.visualFailed(id));
     final id = store.activeId;
     if (id != null && shows.any((x) => x.id == id)) openShow(id, announce: false);
+    if (Platform.environment['PSM_AUTOTESTE'] == '1') _autoteste();
   }
 
   void toast(String m) => _toasts.add(m);
+
+  /// Só no CI: abre o telão e dispara mídias do show de exemplo, para as capturas de tela.
+  Future<void> _autoteste() async {
+    await Future<void>.delayed(const Duration(seconds: 3));
+    await telao?.janela?.abrir();
+    await Future<void>.delayed(const Duration(seconds: 6));
+    final s = active;
+    if (s == null) return;
+    for (final c in s.cells.take(s.count)) {
+      if (c != null && (c.kind == MediaKind.image || c.kind == MediaKind.text)) engine.dispatch(Go(c.id));
+    }
+  }
 
   Show? byId(String id) {
     for (final s in shows) {

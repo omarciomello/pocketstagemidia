@@ -95,6 +95,32 @@ jobs:
       - run: bash tool/ci_run.sh "setup" bash tool/setup_platforms.sh
         shell: bash
       - run: bash tool/ci_run.sh "build" flutter build windows --release
+      - name: Capturas do Windows (mesa + telão)
+        shell: pwsh
+        run: |
+          $env:PSM_AUTOTESTE = "1"
+          $exe = Get-ChildItem build/windows/x64/runner/Release/*.exe | Select-Object -First 1
+          $p = Start-Process $exe.FullName -PassThru
+          New-Item -ItemType Directory -Force cap | Out-Null
+          Add-Type -AssemblyName System.Windows.Forms, System.Drawing
+          foreach ($s in 5, 12, 20) {
+            Start-Sleep -Seconds ($s - ($(Get-Date) - $p.StartTime).TotalSeconds)
+            $b = [System.Windows.Forms.SystemInformation]::VirtualScreen
+            $bmp = New-Object System.Drawing.Bitmap $b.Width, $b.Height
+            $g = [System.Drawing.Graphics]::FromImage($bmp)
+            $g.CopyFromScreen($b.Left, $b.Top, 0, 0, $bmp.Size)
+            $bmp.Save("cap/win_$s.png")
+            "respondendo aos ${s}s: $($p.Responding) · janelas: $((Get-Process -Id $p.Id).MainWindowTitle)" | Tee-Object -Append cap/estado.txt
+          }
+          Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue
+      - name: Publicar capturas do Windows
+        shell: bash
+        run: |
+          cd cap
+          git init -q -b ci-capturas-win
+          git config user.name ci; git config user.email ci@users.noreply.github.com
+          git add . && git commit -qm "capturas windows ${GITHUB_SHA::7}"
+          git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" ci-capturas-win
       - uses: actions/upload-artifact@v6
         with:
           name: PocketStage-Midia-Windows

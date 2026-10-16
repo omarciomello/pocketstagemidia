@@ -74,18 +74,7 @@ Future<void> telaoDesktop() async {
   final tam = alvo.size;
   final nome = '${(tam.width * (alvo.scaleFactor ?? 1)).round()}×${(tam.height * (alvo.scaleFactor ?? 1)).round()} · janela';
   final t = JanelaTelaoLado(nome);
-  const opcoes = WindowOptions(
-    title: 'PocketStage Mídia · Telão',
-    backgroundColor: Colors.black,
-    titleBarStyle: TitleBarStyle.hidden,
-  );
-  await windowManager.waitUntilReadyToShow(opcoes, () async {
-    await windowManager.setBounds(Rect.fromLTWH(pos.dx, pos.dy, tam.width, tam.height));
-    await windowManager.show();
-    await windowManager.setFullScreen(true);
-  });
-  await windowManager.setPreventClose(true);
-  windowManager.addListener(_AoFechar(t));
+  // Primeiro o app, depois a janela: sem borda, do tamanho exato do monitor.
   runApp(TelaoApp(
     transporte: t,
     onFechar: () async {
@@ -93,6 +82,21 @@ Future<void> telaoDesktop() async {
       await windowManager.destroy();
     },
   ));
+  const opcoes = WindowOptions(title: 'PocketStage Mídia · Telão', backgroundColor: Colors.black);
+  windowManager.waitUntilReadyToShow(opcoes, () async {
+    final area = Rect.fromLTWH(pos.dx, pos.dy, tam.width, tam.height);
+    if (Platform.isMacOS) {
+      await windowManager.setBounds(area);
+      await windowManager.show();
+      await windowManager.setFullScreen(true);
+    } else {
+      await windowManager.setAsFrameless();
+      await windowManager.setBounds(area);
+      await windowManager.show();
+    }
+    await windowManager.setPreventClose(true);
+    windowManager.addListener(_AoFechar(t));
+  });
 }
 
 class PocketStageMidia extends StatelessWidget {
