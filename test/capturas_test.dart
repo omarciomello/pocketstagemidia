@@ -11,6 +11,7 @@ import 'package:pocketstage_midia/state.dart';
 import 'package:pocketstage_midia/theme.dart';
 import 'package:pocketstage_midia/ui/cue_editor.dart';
 import 'package:pocketstage_midia/ui/editor_screen.dart';
+import 'package:pocketstage_midia/ui/log_screen.dart';
 import 'package:pocketstage_midia/ui/settings_screen.dart';
 import 'package:pocketstage_midia/ui/show_screen.dart';
 import 'package:pocketstage_midia/ui/shows_screen.dart';
@@ -88,8 +89,8 @@ Show _show() {
     date: '2026-10-17',
     start: '21:00',
     lineup: [
-      LineupItem({'id': 'L1', 'name': 'Abertura'}),
-      LineupItem({'id': caio, 'name': 'Comediante 01'}),
+      LineupItem({'id': 'L1', 'kind': 'set', 'name': 'Abertura', 'min': 5, 'yel': 1, 'red': 1}),
+      LineupItem({'id': caio, 'kind': 'set', 'name': 'Comediante 01', 'min': 10, 'yel': 2, 'red': 1}),
     ],
   );
 }
@@ -130,6 +131,7 @@ void main() {
     clock.advance(1200);
     be.players['c1']!.positionMs = 63000;
     be.players['c5']!.positionMs = 181500;
+    app.cronometroCmd((c, a) => c.play(a - 95000));
     await _tela(t, const Size(1280, 720), ShowScreen(app: app), 'mesa_1280x720');
   }, skip: !ligado);
 
@@ -144,6 +146,25 @@ void main() {
     app.tvOpen = false;
     app.dispatch(const Lock());
     await _tela(t, const Size(1280, 720), ShowScreen(app: app), 'mesa_oculto_bloqueada');
+  }, skip: !ligado);
+
+  testWidgets('registro do show', (t) async {
+    final (app, _, __) = await _app();
+    final s = app.shows.first;
+    final t0 = DateTime(2026, 10, 17, 21, 0, 4).millisecondsSinceEpoch;
+    for (final (dt, tipo, texto) in [
+      (0, 'cue_go', 'Trilha · 1º sinal'),
+      (12000, 'cue_end', 'Terminou · Trilha · 1º sinal'),
+      (60000, 'timer', 'Show iniciado'),
+      (60000, 'timer', 'Play · Abertura'),
+      (61000, 'cue_go', 'Imagem · Cartaz do show'),
+      (300000, 'timer', 'Estourou o tempo · Abertura · fila 05:00 · luz automática'),
+      (342000, 'timer', 'Saiu · Abertura · fila 05:00 · fez 05:42 (+00:42 estourou)'),
+      (350000, 'stop_all', 'Parar tudo'),
+    ]) {
+      app.store.appendLog(s.id, LogEntry(t: t0 + dt, type: tipo, ref: null, linkId: null, text: texto));
+    }
+    await _tela(t, const Size(844, 390), LogScreen(app: app, show: s), 'registro');
   }, skip: !ligado);
 
   testWidgets('lista de shows', (t) async {

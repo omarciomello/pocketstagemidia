@@ -12,6 +12,7 @@ import '../state.dart';
 import '../theme.dart';
 import 'cronometro_box.dart';
 import 'editor_screen.dart';
+import 'log_screen.dart';
 import 'settings_screen.dart';
 import 'shows_screen.dart';
 import 'stage_view.dart';
@@ -146,6 +147,7 @@ class _ShowScreenState extends State<ShowScreen> {
             child: Column(mainAxisSize: MainAxisSize.min, children: [
               item('Shows salvos', Icons.list_alt, () => _abrir(ShowsScreen(app: app))),
               if (s != null) item('Editar este show', Icons.edit_outlined, () => _abrir(EditorScreen(app: app, show: s))),
+              if (s != null) item('Registro do show', Icons.receipt_long_outlined, () => _abrir(LogScreen(app: app, show: s))),
               if (s != null) item('Exportar show', Icons.ios_share, () => exportarShow(context, app, s)),
               if (s != null)
                 item('Exportar show completo', Icons.inventory_2_outlined, () => exportarShow(context, app, s, completo: true)),
