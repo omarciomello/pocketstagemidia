@@ -22,6 +22,7 @@ import io.flutter.plugin.common.MethodChannel
  */
 class MainActivity : FlutterActivity() {
     private var canal: MethodChannel? = null
+    private var som: Som? = null
     private var telao: Telao? = null
     private var telaoJanela: Int? = null
     private var ultimoErro: String? = null
@@ -55,6 +56,15 @@ class MainActivity : FlutterActivity() {
             }
         }
         canal = c
+        val cs = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "psm/player")
+        val s = Som(
+            applicationContext,
+            cs,
+            { flutterEngine.renderer },
+            { telao?.texturas ?: Ponte.texturas() },
+        )
+        cs.setMethodCallHandler { call, result -> s.tratar(call.method, call.arguments as Map<*, *>?, result) }
+        som = s
         Ponte.paraMesa = { msg -> main.post { canal?.invokeMethod("msg", msg) } }
         Ponte.aoFechar = { main.post { if (telaoJanela != null) { telaoJanela = null; avisarDesconectado() } } }
     }
@@ -77,6 +87,7 @@ class MainActivity : FlutterActivity() {
         telao?.fechar()
         telao = null
         Ponte.fecharTelao()
+        som?.liberarTudo()
         try {
             stopService(Intent(this, ServicoPalco::class.java))
         } catch (_: Exception) {
@@ -187,6 +198,8 @@ object Ponte {
             aoFechar?.invoke()
         }
     }
+
+    fun texturas() = telao?.texturas()
 
     fun paraTelao(m: String) {
         val t = telao

@@ -3,9 +3,30 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:pocketstage_midia_core/pocketstage_midia_core.dart';
 
+import '../media/android_player.dart';
 import '../media/backend.dart';
 import '../ui/stage_view.dart';
 import 'canal.dart';
+
+/// Vídeo nativo (Android) desenhado numa textura deste telão.
+class _VideoNoTelao implements MediaPlayer, VideoTextura {
+  @override
+  final ValueNotifier<int?> textura = ValueNotifier(null);
+  @override
+  final ValueNotifier<Size?> tamanho = ValueNotifier(null);
+  @override
+  void play() {}
+  @override
+  void pause() {}
+  @override
+  void setGain(double gain) {}
+  @override
+  int get positionMs => 0;
+  @override
+  int? get durationMs => null;
+  @override
+  void dispose() {}
+}
 
 /// O app que roda no monitor externo: só o palco, em tela cheia.
 class TelaoApp extends StatefulWidget {
@@ -18,6 +39,7 @@ class TelaoApp extends StatefulWidget {
 class _TelaoAppState extends State<TelaoApp> {
   final StageController _stage = StageController();
   final Map<int, MkPlayer> _players = {};
+  final Map<int, _VideoNoTelao> _nativos = {};
   final CanalTelao _canal = CanalTelao.instancia;
   StreamSubscription<Map<String, dynamic>>? _sub;
   Timer? _pos;
@@ -63,11 +85,18 @@ class _TelaoAppState extends State<TelaoApp> {
         _players[id]?.setGain((m['g'] as num).toDouble());
       case 'dispose':
         _players.remove(id)?.dispose();
+      case 'tex':
+        final v = _nativos.putIfAbsent(id, _VideoNoTelao.new);
+        v.textura.value = (m['tex'] as num?)?.toInt();
+        final w = m['w'], h = m['h'];
+        if (w is num && h is num) v.tamanho.value = Size(w.toDouble(), h.toDouble());
       case 'visual':
         final c = m['cue'];
         final pid = m['player'] is num ? (m['player'] as num).toInt() : null;
+        final nid = m['nativo'] is num ? (m['nativo'] as num).toInt() : null;
+        final MediaPlayer? pl = nid != null ? _nativos.putIfAbsent(nid, _VideoNoTelao.new) : (pid == null ? null : _players[pid]);
         _stage.present(
-          c is Map ? StageVisual(Cue.fromJson(Map<String, dynamic>.from(c)), pid == null ? null : _players[pid]) : null,
+          c is Map ? StageVisual(Cue.fromJson(Map<String, dynamic>.from(c)), pl) : null,
           Transition.from(m['tr'] as String?),
           (m['ms'] as num?)?.toInt() ?? 0,
         );

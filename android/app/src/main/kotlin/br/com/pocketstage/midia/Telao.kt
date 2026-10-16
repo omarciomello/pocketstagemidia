@@ -50,6 +50,8 @@ class Telao(
         }
     }
 
+    val texturas get() = engine.renderer
+
     val descricao: String
         get() = if (Build.VERSION.SDK_INT >= 23) {
             val m = display.mode

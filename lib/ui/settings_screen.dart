@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:pocketstage_midia_core/pocketstage_midia_core.dart';
 
@@ -91,6 +93,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
       body: ListView(padding: const EdgeInsets.fromLTRB(14, 0, 14, 24), children: [
         Secao('Som', children: [
+          if (Platform.isAndroid) ...[
+            Row(children: [
+              const Expanded(child: Text('Saída de som', style: TextStyle(fontSize: 15))),
+              Btn('Escolher', compacto: true, onTap: () async {
+                await escolherSaidaSom(context, widget.app);
+                setState(() => _s['audioDeviceType'] = widget.app.settings.audioDeviceType);
+              }),
+            ]),
+            const Padding(
+              padding: EdgeInsets.only(top: 4, bottom: 8),
+              child: Text('Padrão: telefone. Ao conectar adaptador, HDMI ou Bluetooth, o app avisa e você escolhe.',
+                  style: TextStyle(color: Cores.textoFraco, fontSize: 12)),
+            ),
+          ],
           Wrap(spacing: 12, runSpacing: 12, children: [
             CampoNum(label: 'Início suave (s)', controller: _ctl('fadeIn'), largura: 150),
             CampoNum(label: 'Fim suave (s)', controller: _ctl('fadeOut'), largura: 150),

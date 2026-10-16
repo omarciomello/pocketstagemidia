@@ -40,6 +40,8 @@ class TelaoActivity : FlutterActivity() {
             or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN)
     }
 
+    fun texturas() = flutterEngine?.renderer
+
     fun receber(m: String) {
         runOnUiThread { canal?.invokeMethod("msg", m) }
     }

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 import 'package:pocketstage_midia_core/pocketstage_midia_core.dart' as core;
 
+import '../media/android_player.dart';
 import '../media/backend.dart';
 import '../theme.dart';
 
@@ -136,6 +137,9 @@ class _StageViewState extends State<StageView> {
   Widget _visual(core.StageVisual v) {
     final fit = v.cue.fit == core.Fit.cover ? BoxFit.cover : BoxFit.contain;
     final p = v.player;
+    if (p is VideoTextura && !(p is PlayerAndroid && p.alvo == 'telao')) {
+      return _TexturaVideo(p, fit);
+    }
     if (v.cue.kind == core.MediaKind.video && !(p is MkPlayer && p.video != null)) {
       return ColoredBox(
         color: const Color(0xFF0B0C12),
@@ -201,6 +205,39 @@ class _StageViewState extends State<StageView> {
               child: c.child,
             ),
         ]),
+      ),
+    );
+  }
+}
+
+/// Vídeo do Android, desenhado numa textura.
+class _TexturaVideo extends StatelessWidget {
+  const _TexturaVideo(this.v, this.fit);
+  final VideoTextura v;
+  final BoxFit fit;
+
+  @override
+  Widget build(BuildContext context) {
+    return ColoredBox(
+      color: Colors.black,
+      child: ValueListenableBuilder<int?>(
+        valueListenable: v.textura,
+        builder: (_, id, __) {
+          if (id == null) return const SizedBox.expand();
+          return ValueListenableBuilder<Size?>(
+            valueListenable: v.tamanho,
+            builder: (_, tam, __) {
+              final t = tam ?? const Size(16, 9);
+              return SizedBox.expand(
+                child: FittedBox(
+                  fit: fit,
+                  clipBehavior: Clip.hardEdge,
+                  child: SizedBox(width: t.width, height: t.height, child: Texture(textureId: id)),
+                ),
+              );
+            },
+          );
+        },
       ),
     );
   }

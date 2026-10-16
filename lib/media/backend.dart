@@ -1,9 +1,12 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 import 'package:pocketstage_midia_core/pocketstage_midia_core.dart';
+
+import 'android_player.dart';
 
 /// O que o telão deve mostrar agora. Cada troca ganha um número novo ([serial]).
 class StageFrame {
@@ -153,9 +156,16 @@ class MediaKitBackend implements MediaBackend {
   /// Quando há telão externo, o vídeo toca nele (a mesa só controla).
   MediaPlayer? Function(Cue cue, void Function() onEnd, void Function() onError)? videoExterno;
 
+  /// Android: há telão aberto? (o vídeo é desenhado direto nele)
+  bool Function()? telaoAtivo;
+
   @override
   MediaPlayer? open(Cue cue, {required void Function() onEnd, required void Function() onError}) {
     if (cue.uri.isEmpty) return null;
+    if (Platform.isAndroid) {
+      final alvo = cue.kind == MediaKind.video ? ((telaoAtivo?.call() ?? false) ? 'telao' : 'mesa') : null;
+      return SomAndroid.instancia.abrir(cue, alvo: alvo, onEnd: onEnd, onError: onError);
+    }
     if (cue.kind == MediaKind.video) {
       final ext = videoExterno?.call(cue, onEnd, onError);
       if (ext != null) return ext;
@@ -177,11 +187,23 @@ class MediaKitBackend implements MediaBackend {
 /// Toca um arquivo para conferir no editor ("Ouvir").
 class Preview {
   Player? _p;
+  PlayerAndroid? _a;
 
-  bool get playing => _p != null;
+  bool get playing => _p != null || _a != null;
 
   Future<void> play(String path, {double gain = 1, double startSec = 0}) async {
     await stop();
+    if (Platform.isAndroid) {
+      final a = SomAndroid.instancia.abrir(
+        Cue(id: 'ouvir', uri: path, name: '', kind: MediaKind.audio, startSec: startSec, volume: gain.clamp(0.0, 2.0).toDouble()),
+        onEnd: () => stop(),
+        onError: () => stop(),
+      );
+      a.setGain(gain);
+      a.play();
+      _a = a;
+      return;
+    }
     final p = Player();
     _p = p;
     final native = p.platform;
@@ -193,9 +215,14 @@ class Preview {
     await p.open(Media(path));
   }
 
-  Future<void> setGain(double gain) async => _p?.setVolume(gain.clamp(0.0, 2.0) * 100);
+  Future<void> setGain(double gain) async {
+    _a?.setGain(gain);
+    await _p?.setVolume(gain.clamp(0.0, 2.0) * 100);
+  }
 
   Future<void> stop() async {
+    _a?.dispose();
+    _a = null;
     final p = _p;
     _p = null;
     if (p != null) await p.dispose();

@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:pocketstage_midia_core/pocketstage_midia_core.dart';
 
+import '../media/android_player.dart';
 import '../state.dart';
 import '../theme.dart';
 import 'editor_screen.dart';
@@ -28,6 +29,7 @@ class _ShowScreenState extends State<ShowScreen> {
   AppState get app => widget.app;
   Timer? _tick;
   StreamSubscription<String>? _toasts;
+  StreamSubscription<String>? _saidas;
   final FocusNode _foco = FocusNode(debugLabel: 'mesa');
   String? _dicaDoShow;
 
@@ -43,6 +45,16 @@ class _ShowScreenState extends State<ShowScreen> {
     _toasts = app.toasts.listen((m) {
       if (mounted) aviso(context, m);
     });
+    _saidas = app.novaSaida.listen((nome) {
+      if (!mounted) return;
+      final m = ScaffoldMessenger.of(context);
+      m.hideCurrentSnackBar();
+      m.showSnackBar(SnackBar(
+        content: Text('Nova saída de som: $nome. O som continua em ${SomAndroid.instancia.nomeDe(app.settings.audioDeviceType)}.'),
+        duration: const Duration(seconds: 8),
+        action: SnackBarAction(label: 'Escolher', textColor: Cores.ciano, onPressed: _escolherSaida),
+      ));
+    });
     WidgetsBinding.instance.addPostFrameCallback((_) => _dicaAviao());
   }
 
@@ -50,6 +62,7 @@ class _ShowScreenState extends State<ShowScreen> {
   void dispose() {
     _tick?.cancel();
     _toasts?.cancel();
+    _saidas?.cancel();
     _foco.dispose();
     super.dispose();
   }
@@ -150,6 +163,8 @@ class _ShowScreenState extends State<ShowScreen> {
 
   void _abrir(Widget w) => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => w));
 
+  void _escolherSaida() => escolherSaidaSom(context, app);
+
   Future<void> _diagnostico() async {
     final t = app.telao!;
     final txt = await t.diagnostico();
@@ -247,6 +262,31 @@ class _ShowScreenState extends State<ShowScreen> {
         Expanded(
           child: Text(s?.name ?? '', overflow: TextOverflow.ellipsis, style: const TextStyle(color: Cores.textoFraco, fontSize: 13)),
         ),
+        if (Platform.isAndroid)
+          ListenableBuilder(
+            listenable: SomAndroid.instancia,
+            builder: (_, __) {
+              final som = SomAndroid.instancia;
+              final ok = som.escolhidaPresente;
+              return GestureDetector(
+                onTap: _escolherSaida,
+                child: Container(
+                  margin: const EdgeInsets.only(right: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: ok ? Cores.ciano : Cores.laranja),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    Icon(Icons.volume_up, size: 14, color: ok ? Cores.ciano : Cores.laranja),
+                    const SizedBox(width: 4),
+                    Text(ok ? som.nomeDe(som.escolhida).split(' (').first.toUpperCase() : 'TELEFONE*',
+                        style: mono(size: 11, color: ok ? Cores.ciano : Cores.laranja, weight: FontWeight.w700)),
+                  ]),
+                ),
+              );
+            },
+          ),
         if (app.telao != null && Platform.isAndroid)
           ListenableBuilder(
             listenable: app.telao!,

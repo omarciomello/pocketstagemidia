@@ -7,6 +7,7 @@ import 'package:pocketstage_midia_core/pocketstage_midia_core.dart';
 
 import 'data/sample.dart';
 import 'data/store.dart';
+import 'media/android_player.dart';
 import 'media/backend.dart';
 import 'telao/externo.dart';
 
@@ -51,9 +52,15 @@ class AppState extends ChangeNotifier {
     final telao = TelaoExterno(stage);
     final backend = MediaKitBackend(stage);
     backend.videoExterno = (cue, onEnd, onError) => telao.ativo ? telao.abrirVideo(cue, onEnd, onError) : null;
+    backend.telaoAtivo = () => telao.ativo;
     final engine = Engine(backend: backend, settings: store.loadSettings());
     final s = AppState._(store, stage, engine, store.tvOpen, telao);
     telao.onAviso = s.toast;
+    if (Platform.isAndroid) {
+      final som = SomAndroid.instancia;
+      som.escolher(s.settings.audioDeviceType);
+      som.onNovaSaida = (novas) => s._novaSaida.add(novas.join(', '));
+    }
     await s._init();
     return s;
   }
@@ -154,7 +161,22 @@ class AppState extends ChangeNotifier {
 
   // ---------- ajustes ----------
 
+  /// Android: apareceu uma saída de som nova (nome).
+  final StreamController<String> _novaSaida = StreamController<String>.broadcast();
+  Stream<String> get novaSaida => _novaSaida.stream;
+
+  /// Android: escolhe a saída de som (0 = telefone) e guarda nos Ajustes.
+  void escolherSaida(int tipo) {
+    SomAndroid.instancia.escolher(tipo);
+    if (settings.audioDeviceType != tipo) {
+      setSettings(Settings.fromJson({...settings.toJson(), 'audioDeviceType': tipo}));
+    }
+  }
+
   void setSettings(Settings s) {
+    if (Platform.isAndroid && s.audioDeviceType != settings.audioDeviceType) {
+      SomAndroid.instancia.escolher(s.audioDeviceType);
+    }
     engine.setSettings(s);
     store.saveSettings(s);
     notifyListeners();

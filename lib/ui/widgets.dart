@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:pocketstage_midia_core/pocketstage_midia_core.dart';
 
+import '../media/android_player.dart';
+import '../state.dart';
 import '../theme.dart';
 
 // ---------- botões ----------
@@ -396,3 +398,51 @@ class Secao extends StatelessWidget {
 }
 
 String kindLabel(MediaKind k) => k.label;
+
+/// Android: escolher por onde o som sai (telefone, adaptador, HDMI do telão…).
+Future<void> escolherSaidaSom(BuildContext context, AppState app) async {
+  final som = SomAndroid.instancia;
+  await som.carregarSaidas();
+  if (!context.mounted) return;
+  await showModalBottomSheet<void>(
+    context: context,
+    showDragHandle: true,
+    builder: (c) => ListenableBuilder(
+      listenable: som,
+      builder: (c, _) => SafeArea(
+        child: SingleChildScrollView(
+          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+            const Padding(
+              padding: EdgeInsets.fromLTRB(20, 0, 20, 8),
+              child: Text('Saída de som', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17)),
+            ),
+            for (final s in som.saidas)
+              ListTile(
+                leading: Icon(
+                  som.escolhida == s.tipo ? Icons.radio_button_checked : Icons.radio_button_off,
+                  color: som.escolhida == s.tipo ? Cores.ciano : Cores.textoFraco,
+                ),
+                title: Text(s.tipo == 0 ? '${s.nome} · padrão' : s.nome, style: const TextStyle(fontWeight: FontWeight.w600)),
+                subtitle: s.produto.isEmpty ? null : Text(s.produto, style: const TextStyle(color: Cores.textoFraco, fontSize: 12)),
+                onTap: () {
+                  app.escolherSaida(s.tipo);
+                  Navigator.pop(c);
+                },
+              ),
+            if (!som.escolhidaPresente)
+              const Padding(
+                padding: EdgeInsets.fromLTRB(20, 4, 20, 8),
+                child: Text('A saída escolhida não está conectada: o som está saindo pelo telefone.',
+                    style: TextStyle(color: Cores.laranja, fontSize: 12)),
+              ),
+            const Padding(
+              padding: EdgeInsets.fromLTRB(20, 4, 20, 12),
+              child: Text('Vale para trilhas e vídeos. Se a saída escolhida for desconectada, o som volta para o telefone.',
+                  style: TextStyle(color: Cores.textoFraco, fontSize: 12)),
+            ),
+          ]),
+        ),
+      ),
+    ),
+  );
+}

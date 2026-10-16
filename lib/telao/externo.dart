@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:pocketstage_midia_core/pocketstage_midia_core.dart';
 
+import '../media/android_player.dart';
 import '../media/backend.dart';
 import 'canal.dart';
 
@@ -84,6 +85,9 @@ class TelaoExterno extends ChangeNotifier {
   /// Resolução do telão ("1920×1080") ou null sem telão.
   String? conectado;
   final Map<int, RemotePlayer> _players = {};
+
+  /// Android: vídeos nativos desenhados no telão.
+  final Set<PlayerAndroid> _nativos = {};
   int _proximo = 1;
   int _frame = -1;
   int _texto = -1;
@@ -120,6 +124,12 @@ class TelaoExterno extends ChangeNotifier {
       for (final p in perdidos) {
         if (!p.disposed) p.onError();
       }
+      final nativos = _nativos.where((p) => !p.disposed).toList();
+      _nativos.clear();
+      for (final p in nativos) {
+        p.onError();
+      }
+      if (nativos.isNotEmpty && perdidos.isEmpty) onAviso?.call('Telão desconectado: o vídeo parou.');
       if (perdidos.isNotEmpty) onAviso?.call('Telão desconectado: o vídeo parou.');
     }
     notifyListeners();
@@ -148,16 +158,32 @@ class TelaoExterno extends ChangeNotifier {
     if (f.serial != _frame) {
       _frame = f.serial;
       final v = f.visual;
-      final remoto = v?.player is RemotePlayer ? (v!.player as RemotePlayer).id : null;
+      final pl = v?.player;
+      final remoto = pl is RemotePlayer ? pl.id : null;
+      final nativo = pl is PlayerAndroid && pl.alvo == 'telao' ? pl : null;
       // vídeo aberto antes de o telão conectar continua só na mesa
-      final mandar = v != null && (v.cue.kind != MediaKind.video || remoto != null);
+      final mandar = v != null && (v.cue.kind != MediaKind.video || remoto != null || nativo != null);
       _canal.enviar({
         't': 'visual',
         'cue': mandar ? v.cue.toJson() : null,
         'player': remoto,
+        'nativo': nativo?.id,
         'tr': f.transition.key,
         'ms': f.ms,
       });
+      if (nativo != null && _nativos.add(nativo)) {
+        void tex() {
+          final t = nativo.textura.value;
+          if (t == null || nativo.disposed) return;
+          final s = nativo.tamanho.value;
+          _canal.enviar({'t': 'tex', 'id': nativo.id, 'tex': t, 'w': s?.width, 'h': s?.height});
+        }
+
+        nativo.textura.addListener(tex);
+        nativo.tamanho.addListener(tex);
+        tex();
+      }
+      _nativos.removeWhere((p) => p.disposed);
     }
     final t = stage.text;
     if (t.serial != _texto) {

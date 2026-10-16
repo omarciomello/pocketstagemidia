@@ -43,6 +43,11 @@ if [ -n "${PSM_KEYSTORE_B64:-}" ] && [ -f "$GR" ] && ! grep -q 'create("psm")' "
   echo "Assinatura fixa aplicada."
 fi
 
+# Android: ExoPlayer (players nativos com escolha da saída de som)
+if [ -f "$GR" ] && ! grep -q 'media3-exoplayer' "$GR"; then
+  printf '\ndependencies {\n    implementation("androidx.media3:media3-exoplayer:1.5.1")\n}\n' >> "$GR"
+fi
+
 # iOS: som em segundo plano
 PL=ios/Runner/Info.plist
 if [ -f "$PL" ] && ! grep -q 'UIBackgroundModes' "$PL"; then
