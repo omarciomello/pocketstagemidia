@@ -145,12 +145,15 @@ jobs:
             $p = Start-Process $exe.FullName -PassThru
             # 4s: clique no 1º sinal (antes do telão) · 6s: abre o telão · 11s e 15s: cliques · 19s: Parar tudo
             $plano = @{ 4 = @(145, 170); 11 = @(145, 170); 15 = @(145, 265); 19 = @(935, 56) }
-            foreach ($s in 3, 4, 8, 11, 12, 15, 19, 21, 24) {
+            foreach ($s in 3, 4, 6, 7, 8, 11, 12, 15, 19, 21, 24, 27) {
               $falta = $s - ((Get-Date) - $p.StartTime).TotalSeconds
               if ($falta -gt 0) { Start-Sleep -Milliseconds ([int]($falta * 1000)) }
               $m = [Win]::Achar([uint32]$p.Id, "pocketstage_midia")
               # 21s: pede para fechar a mesa (como o X) com o telão aberto; aos 24s deve haver o diálogo
               if ($s -eq 21 -and $m -ne [IntPtr]::Zero) { [Win]::PostMessage($m, 0x10, [IntPtr]::Zero, [IntPtr]::Zero) | Out-Null; "21s WM_CLOSE" | Out-File -Append -Encoding utf8 "cap/$d/estado.txt" }
+              # 24s: clica em "Fechar" no diálogo; aos 27s o app deve ter saído
+              if ($s -eq 24 -and $m -ne [IntPtr]::Zero) { [Win]::Clique($m, 665, 417); "24s clique Fechar" | Out-File -Append -Encoding utf8 "cap/$d/estado.txt" }
+              if ($s -eq 27) { "27s processo vivo: $(-not $p.HasExited)" | Out-File -Append -Encoding utf8 "cap/$d/estado.txt" }
               if ($plano.ContainsKey($s) -and $m -ne [IntPtr]::Zero) { [Win]::Clique($m, $plano[$s][0], $plano[$s][1]); "${s}s clique" | Out-File -Append -Encoding utf8 "cap/$d/estado.txt"; Start-Sleep -Milliseconds 400 }
               $b = [System.Windows.Forms.SystemInformation]::VirtualScreen
               $bmp = New-Object System.Drawing.Bitmap $b.Width, $b.Height

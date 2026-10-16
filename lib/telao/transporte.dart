@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:desktop_multi_window/desktop_multi_window.dart';
+import 'package:flutter/widgets.dart';
 
 import '../diagnostico.dart';
 
@@ -101,6 +102,9 @@ class JanelaTelao implements TransporteMesa {
     Diagnostico.log('abrindo janela do telão');
     _abrindo(true);
     try {
+      // Deixa a mesa desenhar o aviso antes: criar a janela segura a tela por um instante.
+      await WidgetsBinding.instance.endOfFrame;
+      await Future<void>.delayed(const Duration(milliseconds: 120));
       _janela = await WindowController.create(const WindowConfiguration(arguments: 'telao', hiddenAtLaunch: true));
       Timer(const Duration(seconds: 10), () {
         if (_janela != null && !_aberta) {
