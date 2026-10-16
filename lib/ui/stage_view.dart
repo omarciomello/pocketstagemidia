@@ -137,8 +137,10 @@ class _StageViewState extends State<StageView> {
   Widget _visual(core.StageVisual v) {
     final fit = v.cue.fit == core.Fit.cover ? BoxFit.cover : BoxFit.contain;
     final p = v.player;
-    if (p is VideoTextura && !(p is PlayerAndroid && p.alvo == 'telao')) {
-      return _TexturaVideo(p, fit);
+    if (p is VideoTextura) {
+      final tex = p as VideoTextura;
+      final noTelao = p is PlayerAndroid && p.alvo == 'telao';
+      if (!noTelao) return _TexturaVideo(tex, fit);
     }
     if (v.cue.kind == core.MediaKind.video && !(p is MkPlayer && p.video != null)) {
       return ColoredBox(
