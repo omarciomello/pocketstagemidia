@@ -73,6 +73,12 @@ if [ -d windows/runner ]; then
   grep -q 'psm_janela.cpp' "$RC" || perl -0pi -e 's|("flutter_window.cpp"\r?\n)|$1  "psm_janela.cpp"\n  "psm_plugins_telao.cpp"\n|' "$RC"
   grep -q 'psm_janela.cpp' "$RC" || { echo "ERRO: não consegui ajustar $RC"; case "$(uname -s)" in MINGW*|MSYS*|CYGWIN*) exit 1;; esac; }
 fi
+# Mesa no mesmo modo de thread da janela do telão (o plugin usa RunOnSeparateThread)
+MC=windows/runner/main.cpp
+if [ -f "$MC" ] && ! grep -q 'set_ui_thread_policy' "$MC"; then
+  perl -0pi -e 's|(flutter::DartProject project\(L"data"\);\r?\n)|$1  project.set_ui_thread_policy(flutter::UIThreadPolicy::RunOnSeparateThread);\n|' "$MC"
+  grep -q 'set_ui_thread_policy' "$MC" || { echo "ERRO: não consegui ajustar $MC"; case "$(uname -s)" in MINGW*|MSYS*|CYGWIN*) exit 1;; esac; }
+fi
 MW=macos/Runner/MainFlutterWindow.swift
 if [ -f "$MW" ] && ! grep -q 'FlutterMultiWindowPlugin' "$MW"; then
   perl -0pi -e 's|(import FlutterMacOS\r?\n)|$1import desktop_multi_window\n|' "$MW"
