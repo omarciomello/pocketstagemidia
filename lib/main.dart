@@ -99,16 +99,6 @@ void telaoMain() {
 /// Windows: a janela é posta no monitor do telão por código nativo (canal psm/janela),
 /// em pixels reais e em dois passos, para não ficar entre dois monitores de escalas diferentes.
 Future<void> telaoWindows() async {
-  final variante = Platform.environment['PSM_VARIANTE'] ?? '';
-  if (variante == 'vazia') {
-    runApp(const ColoredBox(color: Colors.black));
-    return;
-  }
-  if (variante == 'sem-nativo') {
-    final t = JanelaTelaoLado('teste');
-    runApp(TelaoApp(transporte: t));
-    return;
-  }
   await Diagnostico.iniciar('telao');
   const janela = MethodChannel('psm/janela');
   var nome = 'janela';

@@ -79,6 +79,7 @@ class TelaoExterno extends ChangeNotifier {
     t.eventos.listen(_evento);
     _canal.mensagens.listen(_mensagem);
     _canal.erros.listen((e) => onAviso?.call(e));
+    janela?.abrindoMudou.listen((_) => notifyListeners());
     stage.addListener(_mudou);
     _canal.estado().then((n) {
       if (n != null && conectado == null) _evento(n);
@@ -108,6 +109,9 @@ class TelaoExterno extends ChangeNotifier {
   void Function(String msg)? onAviso;
 
   bool get ativo => conectado != null;
+
+  /// Computador: a janela do telão está sendo aberta.
+  bool get abrindo => janela?.abrindo ?? false;
 
   Future<String> diagnostico() => CanalTelao.instancia.diagnostico();
 

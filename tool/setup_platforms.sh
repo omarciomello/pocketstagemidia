@@ -58,7 +58,7 @@ fi
 FW=windows/runner/flutter_window.cpp
 if [ -f "$FW" ] && ! grep -q 'DesktopMultiWindowSetWindowCreatedCallback' "$FW"; then
   perl -0pi -e 's|(#include "flutter_window.h"\r?\n)|$1#include "desktop_multi_window/desktop_multi_window_plugin.h"\n|' "$FW"
-  perl -0pi -e 's|(RegisterPlugins\(flutter_controller_->engine\(\)\);\r?\n)|$1  DesktopMultiWindowSetWindowCreatedCallback([](void *controller) {\n    auto *flutter_view_controller = reinterpret_cast<flutter::FlutterViewController *>(controller);\n    { char v[32] = {0}; size_t n = 0; getenv_s(&n, v, sizeof(v), "PSM_VARIANTE"); if (strcmp(v, "nada") != 0) RegisterPluginsTelao(flutter_view_controller->engine()); }\n    PsmJanelaRegistrar(flutter_view_controller->engine()->messenger(), flutter_view_controller->view()->GetNativeWindow());\n  });\n|' "$FW"
+  perl -0pi -e 's|(RegisterPlugins\(flutter_controller_->engine\(\)\);\r?\n)|$1  DesktopMultiWindowSetWindowCreatedCallback([](void *controller) {\n    auto *flutter_view_controller = reinterpret_cast<flutter::FlutterViewController *>(controller);\n    RegisterPluginsTelao(flutter_view_controller->engine());\n    PsmJanelaRegistrar(flutter_view_controller->engine()->messenger(), flutter_view_controller->view()->GetNativeWindow());\n  });\n|' "$FW"
   perl -0pi -e 's|(#include "flutter_window.h"\r?\n)|$1#include "psm_janela.h"\n#include <flutter/plugin_registry.h>\nvoid RegisterPluginsTelao(flutter::PluginRegistry* registry);\n|' "$FW"
   grep -q 'DesktopMultiWindowSetWindowCreatedCallback' "$FW" || { echo "ERRO: não consegui ajustar $FW"; case "$(uname -s)" in MINGW*|MSYS*|CYGWIN*) exit 1;; esac; }
 fi
@@ -67,18 +67,37 @@ if [ -d windows/runner ]; then
   # Janela do telão: só os plugins de que ela precisa (player e canal entre janelas).
   GPR=windows/flutter/generated_plugin_registrant.cc
   [ -f "$GPR" ] || flutter pub get >/dev/null
-  perl -0pe 's/void RegisterPlugins\(/void RegisterPluginsTelao(/; s/#include "generated_plugin_registrant.h"/#include <flutter\/plugin_registry.h>/; s/(\n[ \t]*(\w+)RegisterWithRegistrar\(\s*registry->GetRegistrarForPlugin\("[^"]*"\)\);)/ my ($t, $n) = ($1, $2); ($n =~ m{MediaKit|DesktopMultiWindow}) ? "\n  if (PsmQuer(\"$n\"))$t" : "" /ge; s|(#include <flutter/plugin_registry.h>\r?\n)|$1#include <cstdlib>\n#include <cstring>\nstatic bool PsmQuer(const char* n) { char v[32] = {0}; size_t k = 0; getenv_s(&k, v, sizeof(v), "PSM_VARIANTE"); if (strncmp(v, "sem:", 4) == 0) return strncmp(n, v + 4, strlen(v + 4)) != 0; return true; }\n|' "$GPR" > windows/runner/psm_plugins_telao.cpp
+  perl -0pe 's/void RegisterPlugins\(/void RegisterPluginsTelao(/; s/#include "generated_plugin_registrant.h"/#include <flutter\/plugin_registry.h>/; s/(\n[ \t]*(\w+)RegisterWithRegistrar\(\s*registry->GetRegistrarForPlugin\("[^"]*"\)\);)/ my ($t, $n) = ($1, $2); ($n =~ m{MediaKit|DesktopMultiWindow}) ? $t : "" /ge' "$GPR" > windows/runner/psm_plugins_telao.cpp
   echo "--- plugins do telão:"; grep -n 'RegisterWithRegistrar' windows/runner/psm_plugins_telao.cpp || true
   RC=windows/runner/CMakeLists.txt
   grep -q 'psm_janela.cpp' "$RC" || perl -0pi -e 's|("flutter_window.cpp"\r?\n)|$1  "psm_janela.cpp"\n  "psm_plugins_telao.cpp"\n|' "$RC"
   grep -q 'psm_janela.cpp' "$RC" || { echo "ERRO: não consegui ajustar $RC"; case "$(uname -s)" in MINGW*|MSYS*|CYGWIN*) exit 1;; esac; }
 fi
 # Mesa no mesmo modo de thread da janela do telão (o plugin usa RunOnSeparateThread)
-MC=windows/runner/main.cpp
-if [ -f "$MC" ] && ! grep -q 'set_ui_thread_policy' "$MC"; then
-  perl -0pi -e 's|(flutter::DartProject project\(L"data"\);\r?\n)|$1  project.set_ui_thread_policy(flutter::UIThreadPolicy::RunOnSeparateThread);\n|' "$MC"
-  grep -q 'set_ui_thread_policy' "$MC" || { echo "ERRO: não consegui ajustar $MC"; case "$(uname -s)" in MINGW*|MSYS*|CYGWIN*) exit 1;; esac; }
-fi
+# Windows: o media_kit_video guarda uma única instância global e intercepta a janela.
+# Com o telão aberto (segunda janela), a mesa passava a usar o procedimento da janela do
+# telão e parava de receber mouse, teclado e o pedido de fechar. Cada janela agora acha
+# o próprio plugin.
+case "$(uname -s)" in MINGW*|MSYS*|CYGWIN*)
+  [ -f .dart_tool/package_config.json ] || flutter pub get
+  MKV=$(perl -0ne 'print $1 if m{"name":\s*"media_kit_video",\s*"rootUri":\s*"file:///([^"]+)"}' .dart_tool/package_config.json)
+  MKV="$MKV/windows/media_kit_video_plugin.cc"
+  if [ -f "$MKV" ] && ! grep -q 'psm_mkv' "$MKV"; then
+    perl -0pi -e '
+      s{(original_window_proc_ = reinterpret_cast<WNDPROC>\(\s*::SetWindowLongPtr\(flutter_window_, GWLP_WNDPROC,\s*reinterpret_cast<LONG_PTR>\(WindowProcDelegate\)\)\);)}{$1\n  ::SetPropW(flutter_window_, L"psm_mkv", this);};
+      s{(MediaKitVideoPlugin::~MediaKitVideoPlugin\(\) \{\r?\n)}{$1  if (flutter_window_) ::RemovePropW(flutter_window_, L"psm_mkv");\n};
+      s{(LRESULT CALLBACK MediaKitVideoPlugin::WindowProcDelegate\(.*?\{)(.*?)(\r?\n\}\r?\n)}{ my ($a,$b,$c)=($1,$2,$3); $b =~ s/instance_/self/g; "$a\n  MediaKitVideoPlugin* self = reinterpret_cast<MediaKitVideoPlugin*>(::GetPropW(hwnd, L\"psm_mkv\"));\n  if (!self) self = instance_;$b$c" }se;
+    ' "$MKV"
+    if grep -q 'psm_mkv", this' "$MKV" && grep -q 'self->original_window_proc_' "$MKV"; then
+      echo "media_kit_video ajustado: $MKV"
+    else
+      echo "ERRO: não consegui ajustar $MKV"; exit 1
+    fi
+  elif [ ! -f "$MKV" ]; then
+    echo "ERRO: media_kit_video não encontrado ($MKV)"; exit 1
+  fi
+;; esac
+
 MW=macos/Runner/MainFlutterWindow.swift
 if [ -f "$MW" ] && ! grep -q 'FlutterMultiWindowPlugin' "$MW"; then
   perl -0pi -e 's|(import FlutterMacOS\r?\n)|$1import desktop_multi_window\n|' "$MW"

@@ -301,15 +301,16 @@ class _ShowScreenState extends State<ShowScreen> {
             listenable: app.telao!,
             builder: (_, __) {
               final n = app.telao!.conectado;
+              final abrindo = n == null && app.telao!.abrindo;
               return Container(
                 margin: const EdgeInsets.only(right: 8),
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  border: Border.all(color: n != null ? Cores.lilas : Cores.linha),
+                  border: Border.all(color: n != null || abrindo ? Cores.lilas : Cores.linha),
                   borderRadius: BorderRadius.circular(6),
                 ),
-                child: Text(n != null ? 'TELÃO $n' : 'SEM TELÃO',
-                    style: mono(size: 11, color: n != null ? Cores.lilas : Cores.textoFraco, weight: FontWeight.w700)),
+                child: Text(n != null ? 'TELÃO $n' : (abrindo ? 'ABRINDO TELÃO…' : 'SEM TELÃO'),
+                    style: mono(size: 11, color: n != null || abrindo ? Cores.lilas : Cores.textoFraco, weight: FontWeight.w700)),
               );
             },
           ),
@@ -420,6 +421,25 @@ class _ShowScreenState extends State<ShowScreen> {
           listenable: app.telao!,
           builder: (_, __) {
             final t = app.telao!;
+            if (!t.ativo && t.abrindo) {
+              return Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                decoration: BoxDecoration(
+                  color: Cores.cianoFundo,
+                  border: Border.all(color: Cores.ciano),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                  const SizedBox(
+                      width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Cores.ciano)),
+                  const SizedBox(width: 10),
+                  Flexible(
+                    child: Text('Abrindo telão… aguarde',
+                        style: TextStyle(color: Cores.ciano, fontWeight: FontWeight.w700)),
+                  ),
+                ]),
+              );
+            }
             return Btn(
               t.ativo ? 'Fechar telão' : 'Abrir telão no 2º monitor',
               tipo: t.ativo ? BtnTipo.ligado : BtnTipo.normal,

@@ -36,6 +36,7 @@ class JanelaTelao implements TransporteMesa {
       final todas = await WindowController.getAll();
       if (!todas.any((w) => w.windowId == j.windowId)) {
         _janela = null;
+        _abrindo(false);
         if (_aberta) {
           _aberta = false;
           _eventos.add(null);
@@ -47,9 +48,11 @@ class JanelaTelao implements TransporteMesa {
       if (m is! Map<String, dynamic>) return null;
       switch (m['t']) {
         case 'pronto':
+          _abrindo(false);
           _aberta = true;
           _eventos.add(m['nome'] as String? ?? 'janela');
         case 'fechou':
+          _abrindo(false);
           _aberta = false;
           _janela = null;
           _eventos.add(null);
@@ -67,6 +70,17 @@ class JanelaTelao implements TransporteMesa {
   bool _aberta = false;
 
   bool get aberta => _aberta || _janela != null;
+
+  /// A janela do telão foi pedida e ainda não respondeu.
+  bool abrindo = false;
+  final StreamController<bool> _abrindoMudou = StreamController.broadcast();
+  Stream<bool> get abrindoMudou => _abrindoMudou.stream;
+
+  void _abrindo(bool v) {
+    if (abrindo == v) return;
+    abrindo = v;
+    _abrindoMudou.add(v);
+  }
 
   @override
   Stream<Map<String, dynamic>> get mensagens => _msgs.stream;
@@ -86,17 +100,17 @@ class JanelaTelao implements TransporteMesa {
   Future<void> abrir() async {
     if (_janela != null) return;
     Diagnostico.log('abrindo janela do telão');
+    _abrindo(true);
     try {
-      final v = Platform.environment['PSM_VARIANTE'] ?? '';
-      _janela = await WindowController.create(
-          WindowConfiguration(arguments: 'telao', hiddenAtLaunch: v != 'vazia' && v != 'sem-nativo'));
-      if (v == 'vazia') {
-        Timer(const Duration(seconds: 1), () => _eventos.add('vazia'));
-      }
+      _janela = await WindowController.create(const WindowConfiguration(arguments: 'telao', hiddenAtLaunch: true));
       Timer(const Duration(seconds: 10), () {
-        if (_janela != null && !_aberta) _erros.add('O telão não respondeu. Feche a janela dele e tente de novo.');
+        if (_janela != null && !_aberta) {
+          _abrindo(false);
+          _erros.add('O telão não respondeu. Feche a janela dele e tente de novo.');
+        }
       });
     } catch (e) {
+      _abrindo(false);
       _erros.add('Não consegui abrir a janela do telão: $e');
     }
   }
