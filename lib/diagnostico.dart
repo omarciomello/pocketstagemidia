@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/gestures.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -22,6 +24,14 @@ class Diagnostico {
       log('=== início ${DateTime.now()} · ${Platform.operatingSystemVersion}');
       var quadros = 0;
       WidgetsBinding.instance.addPersistentFrameCallback((_) => quadros++);
+      // Cliques e teclas que chegam ao app (para saber se a entrada parou).
+      GestureBinding.instance.pointerRouter.addGlobalRoute((e) {
+        if (e is PointerDownEvent) log('clique ${e.position.dx.round()},${e.position.dy.round()} · view=${e.viewId}');
+      });
+      HardwareKeyboard.instance.addHandler((e) {
+        if (e is KeyDownEvent) log('tecla ${e.logicalKey.keyLabel}');
+        return false;
+      });
       Timer.periodic(const Duration(seconds: 2), (_) {
         log('vivo · quadros=$quadros');
         _s?.flush();
