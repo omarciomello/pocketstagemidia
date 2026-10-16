@@ -107,23 +107,10 @@ class AppState extends ChangeNotifier {
       anota('vivo · quadros=$quadros · telao=${telao?.conectado} · colunas=${st.columns.where((c) => c != null).length}');
       WidgetsBinding.instance.scheduleFrame();
     });
-    await Future<void>.delayed(const Duration(seconds: 3));
+    await Future<void>.delayed(const Duration(seconds: 6));
     anota('abrindo telão');
     await telao?.janela?.abrir();
     anota('abrir() voltou');
-    await Future<void>.delayed(const Duration(seconds: 5));
-    final s = active;
-    if (s == null) return;
-    for (final c in s.cells.take(s.count)) {
-      if (c != null && c.kind != MediaKind.video) engine.dispatch(Go(c.id));
-    }
-    anota('mídias disparadas');
-    await Future<void>.delayed(const Duration(seconds: 10));
-    anota('fechando telão');
-    telao?.janela?.fechar();
-    await Future<void>.delayed(const Duration(seconds: 6));
-    engine.dispatch(const StopAll());
-    anota('parar tudo');
   }
 
   Show? byId(String id) {

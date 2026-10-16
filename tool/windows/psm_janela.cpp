@@ -74,6 +74,11 @@ void PsmJanelaRegistrar(flutter::BinaryMessenger* messenger, HWND view) {
           SetWindowPos(janela, HWND_TOP, r.left + w / 4, r.top + h / 4, w / 2, h / 2,
                        SWP_FRAMECHANGED | SWP_NOACTIVATE | SWP_SHOWWINDOW);
           result->Success(flutter::EncodableValue(std::to_string(w) + "×" + std::to_string(h)));
+        } else if (call.method_name() == "teste") {
+          // Só no CI: janela pequena no canto, para a mesa continuar visível.
+          SetWindowPos(janela, HWND_TOP, r.right - 420, r.bottom - 320, 400, 260,
+                       SWP_FRAMECHANGED | SWP_NOACTIVATE | SWP_SHOWWINDOW);
+          result->Success();
         } else if (call.method_name() == "ocupar") {
           // Passo 2: ocupa o monitor inteiro.
           SetWindowPos(janela, HWND_TOP, r.left, r.top, w, h,

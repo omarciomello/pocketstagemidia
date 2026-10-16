@@ -117,7 +117,7 @@ Future<void> telaoWindows() async {
   ));
   await Future<void>.delayed(const Duration(milliseconds: 500));
   try {
-    await janela.invokeMethod<void>('ocupar');
+    await janela.invokeMethod<void>(Platform.environment['PSM_AUTOTESTE'] == '1' ? 'teste' : 'ocupar');
   } catch (_) {}
 }
 

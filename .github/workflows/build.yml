@@ -114,6 +114,9 @@ jobs:
             [DllImport("user32.dll")] public static extern bool PrintWindow(IntPtr h, IntPtr dc, uint f);
             [DllImport("user32.dll")] public static extern bool GetWindowRect(IntPtr h, out RECT r);
             [DllImport("user32.dll")] public static extern bool IsHungAppWindow(IntPtr h);
+            [DllImport("user32.dll")] public static extern bool SetCursorPos(int x, int y);
+            [DllImport("user32.dll")] public static extern void mouse_event(uint f, uint x, uint y, uint d, UIntPtr e);
+            public static void Clique(IntPtr h, int dx, int dy) { RECT r; GetWindowRect(h, out r); SetCursorPos(r.L + dx, r.T + dy); System.Threading.Thread.Sleep(80); mouse_event(2, 0, 0, 0, UIntPtr.Zero); System.Threading.Thread.Sleep(60); mouse_event(4, 0, 0, 0, UIntPtr.Zero); }
             public struct RECT { public int L, T, R, B; }
             public static string Lista(uint pid) {
               var sb = new StringBuilder();
@@ -135,18 +138,22 @@ jobs:
           $p = Start-Process $exe.FullName -PassThru
           New-Item -ItemType Directory -Force cap | Out-Null
           Add-Type -AssemblyName System.Windows.Forms
-          foreach ($s in 2, 6, 10, 14, 18, 22, 26, 30) {
+          # 4s: clique no 1º sinal (antes do telão) · 6s: abre o telão · 11s e 15s: cliques de novo · 19s: Parar tudo
+          $plano = @{ 4 = @(145, 170); 11 = @(145, 170); 15 = @(145, 265); 19 = @(935, 56) }
+          foreach ($s in 3, 4, 5, 8, 11, 12, 15, 16, 19, 20, 24) {
             $falta = $s - ((Get-Date) - $p.StartTime).TotalSeconds
-            if ($falta -gt 0) { Start-Sleep -Seconds $falta }
+            if ($falta -gt 0) { Start-Sleep -Milliseconds ([int]($falta * 1000)) }
+            $m = [Win]::Achar([uint32]$p.Id, "pocketstage_midia")
+            if ($plano.ContainsKey($s) -and $m -ne [IntPtr]::Zero) { [Win]::Clique($m, $plano[$s][0], $plano[$s][1]); "${s}s clique em $($plano[$s])" | Tee-Object -Append cap/estado.txt; Start-Sleep -Milliseconds 400 }
             $b = [System.Windows.Forms.SystemInformation]::VirtualScreen
             $bmp = New-Object System.Drawing.Bitmap $b.Width, $b.Height
             $g = [System.Drawing.Graphics]::FromImage($bmp); $g.CopyFromScreen($b.Left, $b.Top, 0, 0, $bmp.Size); $bmp.Save("cap/tela_$s.png")
-            $m = [Win]::Achar([uint32]$p.Id, "pocketstage_midia")
-            if ($m -ne [IntPtr]::Zero) { [Win]::Foto($m, "cap/mesa_$s.png") }
             "${s}s · janelas: $([Win]::Lista([uint32]$p.Id))" | Tee-Object -Append cap/estado.txt
           }
           Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue
           Copy-Item "$env:TEMP\psm_mesa.log" cap/mesa.log -ErrorAction SilentlyContinue
+          Copy-Item "$([Environment]::GetFolderPath('MyDocuments'))\PocketStage-Midia-mesa.txt" cap/diag-mesa.txt -ErrorAction SilentlyContinue
+          Copy-Item "$([Environment]::GetFolderPath('MyDocuments'))\PocketStage-Midia-telao.txt" cap/diag-telao.txt -ErrorAction SilentlyContinue
       - name: Publicar capturas do Windows
         if: always()
         shell: bash
