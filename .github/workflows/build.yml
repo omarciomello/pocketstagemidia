@@ -157,6 +157,7 @@ jobs:
             Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue
             Start-Sleep -Seconds 2
             Copy-Item "$docs\PocketStage-Midia-mesa.txt" "cap/$v/diag-mesa.txt" -ErrorAction SilentlyContinue
+            Copy-Item "$docs\PocketStage-Midia-telao.txt" "cap/$v/diag-telao.txt" -ErrorAction SilentlyContinue
           }
       - name: Publicar capturas do Windows
         if: always()
