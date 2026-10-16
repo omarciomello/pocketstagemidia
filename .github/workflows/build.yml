@@ -122,3 +122,27 @@ jobs:
         with:
           name: PocketStage-Midia-iOS-sem-assinatura
           path: PocketStage-Midia-iOS-sem-assinatura.zip
+
+  publicar:
+    needs: [android, windows, apple]
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v7
+        with:
+          path: dist
+      - name: Montar arquivos
+        run: |
+          mkdir -p out
+          cp dist/PocketStage-Midia-Android/PocketStage-Midia.apk out/
+          (cd dist/PocketStage-Midia-Windows && zip -qr ../../out/PocketStage-Midia-Windows.zip .)
+          cp dist/PocketStage-Midia-macOS/PocketStage-Midia-macOS.zip out/
+          ls -la out
+      - name: Publicar a versão de teste
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete teste -y --cleanup-tag -R "$GITHUB_REPOSITORY" || true
+          gh release create teste out/* -R "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
+            --title "Versão de teste (${GITHUB_SHA::7})" \
+            --notes "Última versão gerada pelo build. Android: baixe PocketStage-Midia.apk e instale. Windows: descompacte e abra o .exe. macOS: descompacte e abra o app."
