@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:isolate';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:pocketstage_midia_core/pocketstage_midia_core.dart';
 
 import 'data/sample.dart';
@@ -94,14 +95,33 @@ class AppState extends ChangeNotifier {
 
   /// Só no CI: abre o telão e dispara mídias do show de exemplo, para as capturas de tela.
   Future<void> _autoteste() async {
+    final log = File('${Directory.systemTemp.path}${Platform.pathSeparator}psm_mesa.log');
+    final relogio = Stopwatch()..start();
+    var quadros = 0;
+    WidgetsBinding.instance.addPersistentFrameCallback((_) => quadros++);
+    void anota(String m) => log.writeAsStringSync('${(relogio.elapsedMilliseconds / 1000).toStringAsFixed(1)}s $m\n', mode: FileMode.append);
+    Timer.periodic(const Duration(seconds: 1), (_) {
+      final st = engine.state();
+      anota('vivo · quadros=$quadros · telao=${telao?.conectado} · colunas=${st.columns.where((c) => c != null).length}');
+      WidgetsBinding.instance.scheduleFrame();
+    });
     await Future<void>.delayed(const Duration(seconds: 3));
+    anota('abrindo telão');
     await telao?.janela?.abrir();
-    await Future<void>.delayed(const Duration(seconds: 6));
+    anota('abrir() voltou');
+    await Future<void>.delayed(const Duration(seconds: 5));
     final s = active;
     if (s == null) return;
     for (final c in s.cells.take(s.count)) {
-      if (c != null && (c.kind == MediaKind.image || c.kind == MediaKind.text)) engine.dispatch(Go(c.id));
+      if (c != null && c.kind != MediaKind.video) engine.dispatch(Go(c.id));
     }
+    anota('mídias disparadas');
+    await Future<void>.delayed(const Duration(seconds: 10));
+    anota('fechando telão');
+    telao?.janela?.fechar();
+    await Future<void>.delayed(const Duration(seconds: 6));
+    engine.dispatch(const StopAll());
+    anota('parar tudo');
   }
 
   Show? byId(String id) {

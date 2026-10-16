@@ -99,20 +99,51 @@ jobs:
         shell: pwsh
         run: |
           $env:PSM_AUTOTESTE = "1"
+          Remove-Item "$env:TEMP\psm_mesa.log" -ErrorAction SilentlyContinue
+          Add-Type -ReferencedAssemblies System.Drawing -TypeDefinition @"
+          using System; using System.Drawing; using System.Runtime.InteropServices; using System.Text;
+          public class Win {
+            public delegate bool EnumProc(IntPtr h, IntPtr p);
+            [DllImport("user32.dll")] public static extern bool EnumWindows(EnumProc f, IntPtr p);
+            [DllImport("user32.dll")] public static extern int GetWindowText(IntPtr h, StringBuilder s, int n);
+            [DllImport("user32.dll")] public static extern uint GetWindowThreadProcessId(IntPtr h, out uint pid);
+            [DllImport("user32.dll")] public static extern bool IsWindowVisible(IntPtr h);
+            [DllImport("user32.dll")] public static extern bool PrintWindow(IntPtr h, IntPtr dc, uint f);
+            [DllImport("user32.dll")] public static extern bool GetWindowRect(IntPtr h, out RECT r);
+            [DllImport("user32.dll")] public static extern bool IsHungAppWindow(IntPtr h);
+            public struct RECT { public int L, T, R, B; }
+            public static string Lista(uint pid) {
+              var sb = new StringBuilder();
+              EnumWindows((h, p) => { uint q; GetWindowThreadProcessId(h, out q); if (q == pid && IsWindowVisible(h)) { var t = new StringBuilder(256); GetWindowText(h, t, 256); RECT r; GetWindowRect(h, out r); sb.Append("[" + t + " " + (r.R-r.L) + "x" + (r.B-r.T) + (IsHungAppWindow(h) ? " TRAVADA" : "") + "] "); } return true; }, IntPtr.Zero);
+              return sb.ToString();
+            }
+            public static IntPtr Achar(uint pid, string titulo) {
+              IntPtr achou = IntPtr.Zero;
+              EnumWindows((h, p) => { uint q; GetWindowThreadProcessId(h, out q); var t = new StringBuilder(256); GetWindowText(h, t, 256); if (q == pid && t.ToString() == titulo) { achou = h; return false; } return true; }, IntPtr.Zero);
+              return achou;
+            }
+            public static void Foto(IntPtr h, string arq) {
+              RECT r; GetWindowRect(h, out r); int w = Math.Max(1, r.R - r.L), a = Math.Max(1, r.B - r.T);
+              using (var b = new Bitmap(w, a)) { using (var g = Graphics.FromImage(b)) { var dc = g.GetHdc(); PrintWindow(h, dc, 2); g.ReleaseHdc(dc); } b.Save(arq); }
+            }
+          }
+          "@
           $exe = Get-ChildItem build/windows/x64/runner/Release/*.exe | Select-Object -First 1
           $p = Start-Process $exe.FullName -PassThru
           New-Item -ItemType Directory -Force cap | Out-Null
-          Add-Type -AssemblyName System.Windows.Forms, System.Drawing
-          foreach ($s in 5, 12, 20) {
-            Start-Sleep -Seconds ($s - ($(Get-Date) - $p.StartTime).TotalSeconds)
+          Add-Type -AssemblyName System.Windows.Forms
+          foreach ($s in 2, 6, 10, 14, 18, 22, 26, 30) {
+            $falta = $s - ((Get-Date) - $p.StartTime).TotalSeconds
+            if ($falta -gt 0) { Start-Sleep -Seconds $falta }
             $b = [System.Windows.Forms.SystemInformation]::VirtualScreen
             $bmp = New-Object System.Drawing.Bitmap $b.Width, $b.Height
-            $g = [System.Drawing.Graphics]::FromImage($bmp)
-            $g.CopyFromScreen($b.Left, $b.Top, 0, 0, $bmp.Size)
-            $bmp.Save("cap/win_$s.png")
-            "respondendo aos ${s}s: $($p.Responding) · janelas: $((Get-Process -Id $p.Id).MainWindowTitle)" | Tee-Object -Append cap/estado.txt
+            $g = [System.Drawing.Graphics]::FromImage($bmp); $g.CopyFromScreen($b.Left, $b.Top, 0, 0, $bmp.Size); $bmp.Save("cap/tela_$s.png")
+            $m = [Win]::Achar([uint32]$p.Id, "pocketstage_midia")
+            if ($m -ne [IntPtr]::Zero) { [Win]::Foto($m, "cap/mesa_$s.png") }
+            "${s}s · janelas: $([Win]::Lista([uint32]$p.Id))" | Tee-Object -Append cap/estado.txt
           }
           Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue
+          Copy-Item "$env:TEMP\psm_mesa.log" cap/mesa.log -ErrorAction SilentlyContinue
       - name: Publicar capturas do Windows
         shell: bash
         run: |
