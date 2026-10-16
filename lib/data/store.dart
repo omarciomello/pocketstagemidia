@@ -88,7 +88,8 @@ class Store {
 
   void appendLog(String showId, LogEntry e) {
     try {
-      _logFile(showId).writeAsStringSync('${jsonEncode(e.toJson())}\n', mode: FileMode.append, flush: true);
+      final f = _logFile(showId)..parent.createSync(recursive: true);
+      f.writeAsStringSync('${jsonEncode(e.toJson())}\n', mode: FileMode.append, flush: true);
     } catch (_) {}
   }
 
@@ -141,6 +142,7 @@ class Store {
   set sampleVersion(int v) => _writePrefs({..._readPrefs(), 'sampleVersion': v});
 
   void _writeAtomic(File f, String text) {
+    f.parent.createSync(recursive: true);
     final tmp = File('${f.path}.tmp');
     tmp.writeAsStringSync(text, flush: true);
     tmp.renameSync(f.path);
