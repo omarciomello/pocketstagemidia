@@ -31,7 +31,7 @@ MAN=android/app/src/main/AndroidManifest.xml
 troca "$MAN" 'android:name="\.MainActivity"' 'android:name="br.com.pocketstage.midia.MainActivity"'
 if ! grep -q 'ServicoPalco' "$MAN"; then
   perl -0pi -e 's#<application#<uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>\n    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"/>\n    <uses-permission android:name="android.permission.WAKE_LOCK"/>\n    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>\n    <application#' "$MAN"
-  perl -0pi -e 's#</application>#    <service android:name="br.com.pocketstage.midia.ServicoPalco" android:exported="false" android:foregroundServiceType="mediaPlayback"/>\n    </application>#' "$MAN"
+  perl -0pi -e 's#</application>#    <service android:name="br.com.pocketstage.midia.ServicoPalco" android:exported="false" android:foregroundServiceType="mediaPlayback"/>\n        <activity android:name="br.com.pocketstage.midia.TelaoActivity" android:exported="false" android:theme="\@style/NormalTheme" android:resizeableActivity="true" android:taskAffinity="br.com.pocketstage.midia.telao" android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode" android:hardwareAccelerated="true" android:windowSoftInputMode="adjustResize"/>\n    </application>#' "$MAN"
 fi
 
 # Android: assinatura fixa, se o segredo PSM_KEYSTORE_B64 existir no GitHub

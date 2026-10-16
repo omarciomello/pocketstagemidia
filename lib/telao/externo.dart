@@ -71,6 +71,7 @@ class TelaoExterno extends ChangeNotifier {
     if (!Platform.isAndroid) return;
     _canal.eventos.listen(_evento);
     _canal.mensagens.listen(_mensagem);
+    _canal.erros.listen((e) => onAviso?.call(e));
     stage.addListener(_mudou);
     _canal.estado().then((n) {
       if (n != null && conectado == null) _evento(n);
@@ -91,6 +92,10 @@ class TelaoExterno extends ChangeNotifier {
   void Function(String msg)? onAviso;
 
   bool get ativo => conectado != null;
+
+  Future<String> diagnostico() => _canal.diagnostico();
+
+  Future<void> reconectar() => _canal.reconectar();
 
   void _enviar(Map<String, dynamic> m) {
     if (ativo) _canal.enviar(m);

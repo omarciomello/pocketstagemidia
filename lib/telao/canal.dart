@@ -16,6 +16,8 @@ class CanalTelao {
           _eventos.add(call.arguments as String? ?? 'externo');
         case 'desconectado':
           _eventos.add(null);
+        case 'erro':
+          _erros.add(call.arguments as String? ?? 'Erro no telão.');
       }
       return null;
     });
@@ -26,6 +28,26 @@ class CanalTelao {
   final MethodChannel _c = const MethodChannel('psm/telao');
   final StreamController<Map<String, dynamic>> _msgs = StreamController.broadcast();
   final StreamController<String?> _eventos = StreamController.broadcast();
+  final StreamController<String> _erros = StreamController.broadcast();
+
+  /// Mesa: erros ao abrir o telão.
+  Stream<String> get erros => _erros.stream;
+
+  /// Mesa: lista das telas que o aparelho informa (para descobrir problemas).
+  Future<String> diagnostico() async {
+    try {
+      return await _c.invokeMethod<String>('diagnostico') ?? '';
+    } catch (e) {
+      return 'Diagnóstico indisponível: $e';
+    }
+  }
+
+  /// Mesa: tenta abrir o telão de novo.
+  Future<void> reconectar() async {
+    try {
+      await _c.invokeMethod<String>('reconectar');
+    } catch (_) {}
+  }
 
   /// Mensagens vindas do outro lado.
   Stream<Map<String, dynamic>> get mensagens => _msgs.stream;

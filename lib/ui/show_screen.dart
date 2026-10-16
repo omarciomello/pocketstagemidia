@@ -138,6 +138,7 @@ class _ShowScreenState extends State<ShowScreen> {
                   app.dispatch(const ReleaseLocks());
                   aviso(context, 'Deixas liberadas.');
                 }),
+              if (app.telao != null && Platform.isAndroid) item('Telão: diagnóstico', Icons.cast, _diagnostico),
               item('Ajustes', Icons.tune, () => _abrir(SettingsScreen(app: app))),
               item('Sobre', Icons.info_outline, _sobre),
             ]),
@@ -148,6 +149,30 @@ class _ShowScreenState extends State<ShowScreen> {
   }
 
   void _abrir(Widget w) => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => w));
+
+  Future<void> _diagnostico() async {
+    final t = app.telao!;
+    final txt = await t.diagnostico();
+    if (!mounted) return;
+    await showDialog<void>(
+      context: context,
+      builder: (c) => AlertDialog(
+        title: const Text('Telão: diagnóstico', style: TextStyle(fontWeight: FontWeight.w800)),
+        content: SingleChildScrollView(child: SelectableText(txt, style: mono(size: 12, color: Cores.texto, weight: FontWeight.w500))),
+        actions: [
+          Btn('Copiar', onTap: () {
+            Clipboard.setData(ClipboardData(text: txt));
+            aviso(context, 'Diagnóstico copiado.');
+          }),
+          Btn('Reconectar', onTap: () {
+            Navigator.pop(c);
+            t.reconectar();
+          }),
+          Btn('Fechar', tipo: BtnTipo.primario, onTap: () => Navigator.pop(c)),
+        ],
+      ),
+    );
+  }
 
   void _sobre() {
     showDialog<void>(
