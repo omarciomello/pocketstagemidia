@@ -137,7 +137,7 @@ jobs:
           $exe = Get-ChildItem build/windows/x64/runner/Release/*.exe | Select-Object -First 1
           Add-Type -AssemblyName System.Windows.Forms
           $docs = [Environment]::GetFolderPath('MyDocuments')
-          foreach ($v in "atual", "nada") {
+          foreach ($v in "so-mk", "so-dmw") {
             $env:PSM_VARIANTE = $v
             Remove-Item "$docs\PocketStage-Midia-*.txt" -ErrorAction SilentlyContinue
             New-Item -ItemType Directory -Force "cap/$v" | Out-Null
