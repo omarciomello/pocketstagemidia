@@ -96,14 +96,14 @@ jobs:
         shell: bash
       - run: bash tool/ci_run.sh "build" flutter build windows --release
       - name: Capturas do Windows (mesa + telão)
-        shell: pwsh
+        shell: powershell
         continue-on-error: true
         run: |
           New-Item -ItemType Directory -Force cap | Out-Null
           Start-Transcript -Path cap/transcript.txt
           $env:PSM_AUTOTESTE = "1"
           Remove-Item "$env:TEMP\psm_mesa.log" -ErrorAction SilentlyContinue
-          Add-Type -ReferencedAssemblies System.Drawing, System.Drawing.Common, System.Drawing.Primitives -TypeDefinition @"
+          Add-Type -ReferencedAssemblies System.Drawing -TypeDefinition @"
           using System; using System.Drawing; using System.Runtime.InteropServices; using System.Text;
           public class Win {
             public delegate bool EnumProc(IntPtr h, IntPtr p);
