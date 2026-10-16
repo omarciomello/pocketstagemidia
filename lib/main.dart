@@ -23,7 +23,7 @@ Future<void> main(List<String> args) async {
   if (Platform.isWindows || Platform.isMacOS) {
     try {
       final w = await WindowController.fromCurrentEngine();
-      if (w.arguments == 'telao') return telaoDesktop();
+      if (w.arguments == 'telao') return await telaoDesktop();
     } catch (_) {}
   }
   // A tela nunca apaga com o app aberto (obrigatório).
