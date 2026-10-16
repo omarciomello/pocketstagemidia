@@ -223,6 +223,17 @@ class Engine {
     _changed();
   }
 
+  /// Troca o show pela versão editada sem parar o que está tocando (salvamento automático).
+  /// Se for outro show, faz o mesmo que [loadShow].
+  void updateShow(Show s) {
+    if (_show?.id != s.id) {
+      loadShow(s);
+      return;
+    }
+    _show = s;
+    _changed();
+  }
+
   /// Fecha o show: para tudo na hora e fica sem show.
   void unloadShow() {
     hardStop();

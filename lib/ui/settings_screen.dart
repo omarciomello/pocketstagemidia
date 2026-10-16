@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -21,30 +22,32 @@ class _SettingsScreenState extends State<SettingsScreen> {
   late Map<String, String> _keys = Map.of(widget.app.settings.keys);
   final Map<String, TextEditingController> _num = {};
 
-  TextEditingController _ctl(String k) => _num.putIfAbsent(k, () => TextEditingController(text: numTxt((_s[k] as num).toDouble())));
+  TextEditingController _ctl(String k) => _num.putIfAbsent(
+      k,
+      () => TextEditingController(text: numTxt((_s[k] as num).toDouble()))
+        ..addListener(() {
+          _timer?.cancel();
+          _timer = Timer(const Duration(milliseconds: 600), _aplicar);
+        }));
+  Timer? _timer;
 
   @override
   void dispose() {
+    _timer?.cancel();
+    _aplicar();
     for (final c in _num.values) {
       c.dispose();
     }
     super.dispose();
   }
 
-  void _set(String k, Object v) => setState(() => _s[k] = v);
-
-  void _restaurar() {
-    setState(() {
-      _s = const Settings().toJson();
-      _keys = Map.of(const Settings().keys);
-      for (final e in _num.entries) {
-        e.value.text = numTxt((_s[e.key] as num).toDouble());
-      }
-    });
-    aviso(context, 'Padrões carregados. Toque em Salvar para aplicar.');
+  void _set(String k, Object v) {
+    setState(() => _s[k] = v);
+    _aplicar();
   }
 
-  void _salvar() {
+  /// Salvamento automático: cada mudança vale na hora.
+  void _aplicar() {
     final j = Map<String, dynamic>.of(_s);
     for (final e in _num.entries) {
       final v = parseNum(e.value.text);
@@ -52,7 +55,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
     j['keys'] = _keys;
     final nv = Settings.fromJson(j);
-    widget.app.setSettings(nv);
+    if (jsonEncodeSettings(nv) != jsonEncodeSettings(widget.app.settings)) widget.app.setSettings(nv);
+  }
+
+  static String jsonEncodeSettings(Settings s) => s.toJson().toString();
+
+  Future<void> _restaurar() async {
+    if (!await confirmar(context, 'Restaurar padrões?', 'Todos os Ajustes voltam ao padrão do app.', ok: 'Restaurar')) return;
+    setState(() {
+      _s = const Settings().toJson();
+      _keys = Map.of(const Settings().keys);
+      for (final e in _num.entries) {
+        e.value.text = numTxt((_s[e.key] as num).toDouble());
+      }
+    });
+    _aplicar();
+    if (mounted) aviso(context, 'Padrões restaurados.');
+  }
+
+  void _salvar() {
+    _aplicar();
     final show = widget.app.active;
     String? choque;
     if (show != null) {
@@ -63,7 +85,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     aviso(
       context,
       choque != null
-          ? 'Ajustes salvos. A tecla ${keyLabel(choque)} também está numa mídia; o atalho geral tem prioridade.'
+          ? 'A tecla ${keyLabel(choque)} também está numa mídia; o atalho geral tem prioridade.'
           : 'Ajustes salvos.',
     );
     Navigator.pop(context);
@@ -76,6 +98,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       _keys.removeWhere((a, v) => v == k && a != g.key);
       _keys[g.key] = k;
     });
+    _aplicar();
   }
 
   @override
@@ -87,7 +110,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         actions: [
           Btn('Restaurar padrões', compacto: true, onTap: _restaurar),
           const SizedBox(width: 8),
-          Btn('Salvar', tipo: BtnTipo.primario, compacto: true, onTap: _salvar),
+          Btn('Pronto', tipo: BtnTipo.primario, compacto: true, onTap: _salvar),
           const SizedBox(width: 12),
         ],
       ),
@@ -200,7 +223,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 Btn(_keys[g.key]?.isNotEmpty == true ? keyLabel(_keys[g.key]!) : 'Definir', onTap: () => _definirTecla(g)),
                 if (_keys[g.key]?.isNotEmpty == true) ...[
                   const SizedBox(width: 6),
-                  Btn('Limpar', onTap: () => setState(() => _keys.remove(g.key))),
+                  Btn('Limpar', onTap: () {
+                    setState(() => _keys.remove(g.key));
+                    _aplicar();
+                  }),
                 ],
               ]),
             ),

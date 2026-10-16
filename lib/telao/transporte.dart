@@ -3,6 +3,8 @@ import 'dart:convert';
 
 import 'package:desktop_multi_window/desktop_multi_window.dart';
 
+import '../diagnostico.dart';
+
 /// Mesa ↔ telão: mensagens em JSON. No Android vai pelo canal nativo; no computador, entre janelas.
 abstract class TransporteMesa {
   Stream<Map<String, dynamic>> get mensagens;
@@ -82,6 +84,7 @@ class JanelaTelao implements TransporteMesa {
 
   Future<void> abrir() async {
     if (_janela != null) return;
+    Diagnostico.log('abrindo janela do telão');
     try {
       _janela = await WindowController.create(const WindowConfiguration(arguments: 'telao', hiddenAtLaunch: true));
       Timer(const Duration(seconds: 10), () {
@@ -93,6 +96,7 @@ class JanelaTelao implements TransporteMesa {
   }
 
   void fechar() {
+    Diagnostico.log('pedindo para fechar o telão');
     enviar({'t': 'fechar'});
   }
 }

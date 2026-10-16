@@ -60,6 +60,18 @@ void main() {
     expect(jsonDecode(utf8.decode(files['log.json']!)), [log.first.toJson()]);
   });
 
+  test('exportar só a estrutura: sem mídias, e elas voltam como arquivo faltando', () {
+    final r = PsShow.exportTo(demo(), log, p('saida'), withMedia: false);
+    expect(r.path, endsWith('(estrutura).psshow'));
+    final files = unzip(r.path);
+    expect(files.keys.where((k) => k.startsWith('media/')), isEmpty);
+    final imp = PsShow.importFile(r.path, p('midias'));
+    expect(imp.show.cells[0]!.uri, 'media/a1.mp3');
+    expect(File(imp.show.cells[0]!.uri).existsSync(), isFalse);
+    expect(imp.show.cells[2]!.text, 'Desliguem os celulares');
+    expect(PsShow.mediaSize(demo()), 3000 + 7);
+  });
+
   test('importa como show novo, com as mídias copiadas', () {
     final r = PsShow.exportTo(demo(), log, p('saida'));
     final imp = PsShow.importFile(r.path, p('midias'), now: 77);

@@ -73,10 +73,23 @@ class PsShow {
     return RegExp(r'^[a-z0-9]{1,5}$').hasMatch(e) ? e : 'bin';
   }
 
+  /// Soma o tamanho dos arquivos de mídia do show, em bytes.
+  static int mediaSize(Show show) {
+    var total = 0;
+    for (final c in show.cells.take(show.count)) {
+      if (c == null || c.kind == MediaKind.text || c.uri.isEmpty) continue;
+      final f = File(localPath(c.uri));
+      if (f.existsSync()) total += f.lengthSync();
+    }
+    return total;
+  }
+
   /// Exporta [show] e o [log] para `<outDir>/<nome>.psshow`.
-  static ExportResult exportTo(Show show, List<LogEntry> log, String outDir) {
+  /// Sem [withMedia] ("Exportar show"), vai só a estrutura: as mídias ficam apontando para
+  /// `media/<cueId>.<ext>` e, ao importar, aparecem como "arquivo faltando".
+  static ExportResult exportTo(Show show, List<LogEntry> log, String outDir, {bool withMedia = true}) {
     Directory(outDir).createSync(recursive: true);
-    final out = '$outDir${Platform.pathSeparator}${baseName(show)}.psshow';
+    final out = '$outDir${Platform.pathSeparator}${baseName(show)}${withMedia ? '' : ' (estrutura)'}.psshow';
     final zip = _ZipWriter(out);
     var missing = 0;
     try {
@@ -88,6 +101,10 @@ class PsShow {
         }
         final path = localPath(c.uri);
         final f = File(path);
+        if (!withMedia) {
+          cells.add(c.copyWith(uri: 'media/${safe(c.id)}.${_ext(path)}'));
+          continue;
+        }
         if (!f.existsSync()) {
           missing++;
           cells.add(c);

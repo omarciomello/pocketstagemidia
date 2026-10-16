@@ -20,13 +20,13 @@ Future<Show> createSampleShow(Store store) async {
   Map<String, dynamic> fila(String name, String kind, int min, int yel) =>
       {'id': newId(), 'kind': kind, 'name': name, 'min': min, 'yel': yel, 'red': 1};
   final lineup = [
-    fila('Abertura · MC Duda', 'set', 5, 1),
-    fila('Caio Vidal', 'set', 10, 2),
+    fila('Abertura', 'set', 5, 1),
+    fila('Comediante 01', 'set', 10, 2),
     fila('Intervalo', 'break', 15, 3),
-    fila('Bia Soares', 'set', 12, 2),
+    fila('Comediante 02', 'set', 12, 2),
     fila('Final de show', 'end', 5, 2),
   ];
-  final caio = lineup[1]['id'] as String;
+  final com01 = lineup[1]['id'] as String;
   final intervalo = lineup[2]['id'] as String;
 
   Cue som(String file, String name, {bool fadeOut = true, double volume = 0.9}) =>
@@ -53,20 +53,20 @@ Future<Show> createSampleShow(Store store) async {
       .copyWith(loop: true, fadeIn: true, fadeCurve: FadeCurve.suave);
   c[2] = img(await asset('cartaz.png'), 'Cartaz do show');
   c[3] = txt('Desliguem os celulares').copyWith(autoStopSec: 8, note: 'sai sozinho em 8 s');
-  // linha 2: entrada do Caio (a vinheta puxa o fundo de céu, que fica depois que ela acaba)
+  // linha 2: entrada do Comediante 01 (a vinheta puxa o fundo de céu, que fica depois que ela acaba)
   c[4] = som(await asset('sinal2.wav'), '2º sinal', fadeOut: false).copyWith(color: vermelho, hotkey: '2');
-  c[6] = img(await asset('ceu.png'), 'Fundo céu noturno').copyWith(fit: Fit.cover, linkId: caio, role: Role.fundo);
-  c[5] = som(await asset('vinheta.wav'), 'Vinheta Caio', fadeOut: false).copyWith(
-    linkId: caio,
+  c[6] = img(await asset('ceu.png'), 'Fundo céu noturno').copyWith(fit: Fit.cover, linkId: com01, role: Role.fundo);
+  c[5] = som(await asset('vinheta.wav'), 'Vinheta de entrada', fadeOut: false).copyWith(
+    linkId: com01,
     role: Role.entrada,
     visualId: c[6]!.id,
     visualStays: true,
     color: '#E8C547',
-    note: 'quando o MC chamar',
+    note: 'quando o apresentador chamar',
     duckDb: -10,
   );
-  c[7] = txt('Caio Vidal\nstand-up · 10 min', pos: TextPos.right, size: TextSize.g)
-      .copyWith(linkId: caio, role: Role.entrada);
+  c[7] = txt('Comediante 01\nstand-up · 10 min', pos: TextPos.right, size: TextSize.g)
+      .copyWith(linkId: com01, role: Role.entrada);
   // linha 3: intervalo
   c[8] = som(await asset('sinal3.wav'), '3º sinal', fadeOut: false).copyWith(color: vermelho, hotkey: '3');
   c[9] = som(await asset('plateia.wav'), 'Ruído de plateia').copyWith(lockAfter: true);

@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:pocketstage_midia_core/pocketstage_midia_core.dart';
 
 import '../media/android_player.dart';
+import '../diagnostico.dart';
 import '../state.dart';
 import '../theme.dart';
 import 'editor_screen.dart';
@@ -145,6 +146,8 @@ class _ShowScreenState extends State<ShowScreen> {
               item('Shows salvos', Icons.list_alt, () => _abrir(ShowsScreen(app: app))),
               if (s != null) item('Editar este show', Icons.edit_outlined, () => _abrir(EditorScreen(app: app, show: s))),
               if (s != null) item('Exportar show', Icons.ios_share, () => exportarShow(context, app, s)),
+              if (s != null)
+                item('Exportar show completo', Icons.inventory_2_outlined, () => exportarShow(context, app, s, completo: true)),
               item('Importar show', Icons.file_open_outlined, () => importarShow(context, app)),
               if (travadas > 0)
                 item('Liberar deixas travadas ($travadas)', Icons.lock_open, () {
@@ -153,6 +156,12 @@ class _ShowScreenState extends State<ShowScreen> {
                 }),
               if (app.telao != null && Platform.isAndroid) item('Telão: diagnóstico', Icons.cast, _diagnostico),
               item('Ajustes', Icons.tune, () => _abrir(SettingsScreen(app: app))),
+              if (Diagnostico.caminho != null)
+                item('Arquivo de diagnóstico', Icons.bug_report_outlined, () {
+                  final c = Diagnostico.caminho!;
+                  Clipboard.setData(ClipboardData(text: c));
+                  aviso(context, 'Caminho copiado: $c');
+                }),
               item('Sobre', Icons.info_outline, _sobre),
             ]),
           ),
@@ -541,6 +550,7 @@ class _ShowScreenState extends State<ShowScreen> {
     final espera = st.waitingMs[i];
     final saindo = vivo == null && st.fadingIdx.contains(i);
     final travada = cue.lockAfter && st.usedCueIds.contains(cue.id);
+    final falta = app.faltando(s).contains(cue.id);
     final noTelao = vivo?.onScreen ?? false;
     final artista = s.lineupName(cue.linkId);
     final cor = corDe(cue.color);
@@ -583,7 +593,10 @@ class _ShowScreenState extends State<ShowScreen> {
                   alignment: Alignment.centerLeft,
                   maxHeight: double.infinity,
                   child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-                if (travada)
+                if (falta)
+                  const Text('ARQUIVO FALTANDO',
+                      style: TextStyle(color: Cores.vermelho, fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 1.2))
+                else if (travada)
                   const Text('TRAVADA', style: TextStyle(color: Cores.vermelho, fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 1.2))
                 else if (cue.kind != MediaKind.audio)
                   Text(cue.kind.label,

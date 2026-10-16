@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:pocketstage_midia_core/pocketstage_midia_core.dart';
@@ -52,18 +54,39 @@ class _EditorScreenState extends State<EditorScreen> {
   late Show _draft = widget.show ?? Show.empty();
   late final TextEditingController _nome = TextEditingController(text: _draft.name);
   bool _mudou = false;
+  bool _salvouAlgo = false;
+  Timer? _timer;
   bool get _novo => widget.show == null;
 
   @override
   void dispose() {
+    if (_timer?.isActive ?? false) _salvarAgora();
+    _timer?.cancel();
     _nome.dispose();
     super.dispose();
   }
 
-  void _set(Show s) => setState(() {
-        _draft = s;
-        _mudou = true;
-      });
+  void _set(Show s) {
+    setState(() => _draft = s);
+    _agendar();
+  }
+
+  /// Salvamento automático: meio segundo depois da última mudança.
+  void _agendar() {
+    _mudou = true;
+    _timer?.cancel();
+    _timer = Timer(const Duration(milliseconds: 500), _salvarAgora);
+  }
+
+  void _salvarAgora() {
+    _timer?.cancel();
+    if (!_mudou) return;
+    final nome = _nome.text.trim();
+    widget.app.saveShow(_draft.copyWith(name: nome.isEmpty ? 'Show sem nome' : nome));
+    _mudou = false;
+    _salvouAlgo = true;
+    if (mounted) setState(() {});
+  }
 
   void _setCell(int i, Cue? c) {
     final cells = List<Cue?>.of(_draft.cells);
@@ -124,23 +147,15 @@ class _EditorScreenState extends State<EditorScreen> {
     _setCell(i, r.removed ? null : r.cue);
   }
 
-  void _salvar() {
-    final nome = _nome.text.trim();
-    final s = _draft.copyWith(name: nome.isEmpty ? 'Show sem nome' : nome);
-    widget.app.saveShow(s);
-    if (!widget.app.hasActive) widget.app.openShow(s.id);
-    _mudou = false;
-    aviso(context, 'Show salvo.');
-    Navigator.of(context).pop();
-  }
-
-  Future<void> _cancelar() async {
-    if (_mudou && !await confirmar(context, 'Descartar mudanças?', 'O que você mudou neste show não será salvo.', ok: 'Descartar', perigo: true)) {
-      return;
+  /// Sair do editor: tudo já está salvo; um show novo sem nada fica de fora.
+  void _sair() {
+    _salvarAgora();
+    if (_novo && !_salvouAlgo) {
+      widget.app.discardEdit(_draft);
+    } else if (!widget.app.hasActive) {
+      widget.app.openShow(_draft.id);
     }
-    widget.app.discardEdit(_draft);
-    _mudou = false;
-    if (mounted) Navigator.of(context).pop();
+    Navigator.of(context).pop();
   }
 
   List<String> _tags(Cue c) {
@@ -164,16 +179,19 @@ class _EditorScreenState extends State<EditorScreen> {
   Widget build(BuildContext context) {
     final d = _draft;
     return PopScope(
-      canPop: !_mudou,
+      canPop: false,
       onPopInvokedWithResult: (didPop, _) {
-        if (!didPop) _cancelar();
+        if (!didPop) _sair();
       },
       child: Scaffold(
         appBar: AppBar(
-          leading: IconButton(icon: const Icon(Icons.close), onPressed: _cancelar),
+          leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: _sair),
           title: Text(_novo ? 'Novo show' : 'Editar show'),
           actions: [
-            Btn('Salvar', tipo: BtnTipo.primario, compacto: true, onTap: _salvar),
+            Text(_mudou ? 'salvando…' : (_salvouAlgo ? 'salvo' : ''),
+                style: const TextStyle(color: Cores.textoFraco, fontSize: 12)),
+            const SizedBox(width: 10),
+            Btn('Pronto', tipo: BtnTipo.primario, compacto: true, onTap: _sair),
             const SizedBox(width: 12),
           ],
         ),
@@ -181,7 +199,7 @@ class _EditorScreenState extends State<EditorScreen> {
           TextField(
             controller: _nome,
             maxLength: 60,
-            onChanged: (_) => _mudou = true,
+            onChanged: (_) => _agendar(),
             decoration: const InputDecoration(labelText: 'Nome do show', hintText: 'Ex.: Estreia sexta'),
           ),
           const Rotulo('Quantidade de botões'),

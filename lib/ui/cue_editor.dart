@@ -132,11 +132,16 @@ class _CueEditorState extends State<CueEditor> {
     _up(c.copyWith(hotkey: k));
   }
 
-  void _salvar() {
+  /// Salva ao sair (salvamento automático). Texto vazio: uma mídia nova não é criada.
+  void _salvar({bool fechando = false}) {
     var nome = _nome.text.trim();
     final texto = _texto.text.trim();
     if (_ehTexto && texto.isEmpty) {
-      aviso(context, 'Escreva o texto que vai aparecer no telão.');
+      if (fechando) {
+        Navigator.pop(context);
+      } else {
+        aviso(context, 'Escreva o texto que vai aparecer no telão.');
+      }
       return;
     }
     if (nome.isEmpty) nome = _ehTexto ? texto.split('\n').first : 'Sem nome';
@@ -174,12 +179,17 @@ class _CueEditorState extends State<CueEditor> {
     final outras = _outras();
     final fila = widget.show.lineup;
 
-    return Scaffold(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _salvar(fechando: true);
+      },
+      child: Scaffold(
       appBar: AppBar(
-        leading: IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),
+        leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => _salvar(fechando: true)),
         title: Text(widget.isNew ? 'Nova mídia' : 'Ajustes da mídia'),
         actions: [
-          Btn(widget.isNew ? 'Adicionar' : 'Salvar', tipo: BtnTipo.primario, compacto: true, onTap: _salvar),
+          Btn('Pronto', tipo: BtnTipo.primario, compacto: true, onTap: _salvar),
           const SizedBox(width: 12),
         ],
       ),
@@ -202,7 +212,7 @@ class _CueEditorState extends State<CueEditor> {
             controller: _texto,
             minLines: 3,
             maxLines: 6,
-            decoration: const InputDecoration(labelText: 'Texto no telão', hintText: 'Ex.: Caio Vidal\nstand-up · 10 min'),
+            decoration: const InputDecoration(labelText: 'Texto no telão', hintText: 'Ex.: Comediante 01\nstand-up · 10 min'),
           ),
           const SizedBox(height: 12),
         ],
@@ -314,6 +324,7 @@ class _CueEditorState extends State<CueEditor> {
           style: const TextStyle(color: Cores.textoFraco, fontSize: 12),
         ),
       ]),
+    ),
     );
   }
 
@@ -465,7 +476,7 @@ class _CueEditorState extends State<CueEditor> {
       TextField(
         controller: _nota,
         maxLength: 60,
-        decoration: const InputDecoration(labelText: 'Nota', hintText: 'Ex.: entra depois da fala do Caio'),
+        decoration: const InputDecoration(labelText: 'Nota', hintText: 'Ex.: entra depois da fala do apresentador'),
       ),
       Row(children: [
         const Text('Atalho', style: TextStyle(color: Cores.textoFraco)),

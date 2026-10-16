@@ -566,7 +566,7 @@ class LineupItem {
 const Set<String> _showKeys = {
   'id', 'name', 'lineup', 'media', 'updatedAt', 'count', 'cells', 'format', 'version',
 };
-const List<String> _showOptional = ['date', 'start', 'eventType'];
+const List<String> _showOptional = ['date', 'start', 'eventType', 'local', 'showType'];
 
 /// Show compatível com o PocketStage. A parte do Mídia fica em `media`.
 class Show {
@@ -583,6 +583,12 @@ class Show {
 
   /// "standup", "teatro" ou "banda".
   final String? eventType;
+
+  /// Onde é o show (ex.: "Teatro X").
+  final String? local;
+
+  /// "solo", "elenco" ou "festival".
+  final String? showType;
   final List<LineupItem> lineup;
   final int updatedAt;
   final Map<String, dynamic>? extra;
@@ -595,6 +601,8 @@ class Show {
     this.date,
     this.start,
     this.eventType,
+    this.local,
+    this.showType,
     this.lineup = const [],
     this.updatedAt = 0,
     this.extra,
@@ -651,6 +659,8 @@ class Show {
         date: date,
         start: start,
         eventType: eventType,
+        local: local,
+        showType: showType,
         lineup: lineup ?? this.lineup,
         updatedAt: updatedAt ?? this.updatedAt,
         extra: extra,
@@ -667,6 +677,8 @@ class Show {
     if (date != null) o['date'] = date;
     if (start != null) o['start'] = start;
     if (eventType != null) o['eventType'] = eventType;
+    if (local != null) o['local'] = local;
+    if (showType != null) o['showType'] = showType;
     o['lineup'] = [for (final l in lineup) deepCopyJson(l.raw)];
     o['media'] = {
       'count': count,
@@ -718,6 +730,8 @@ class Show {
       date: o['date'] is String ? o['date'] as String : null,
       start: o['start'] is String ? o['start'] as String : null,
       eventType: o['eventType'] is String ? o['eventType'] as String : null,
+      local: o['local'] is String ? o['local'] as String : null,
+      showType: o['showType'] is String ? o['showType'] as String : null,
       lineup: lineup,
       updatedAt: _i(o, 'updatedAt', 0),
       extra: extra.isEmpty ? null : extra,

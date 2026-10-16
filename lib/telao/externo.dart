@@ -5,6 +5,7 @@ import 'package:pocketstage_midia_core/pocketstage_midia_core.dart';
 
 import '../media/android_player.dart';
 import '../media/backend.dart';
+import '../diagnostico.dart';
 import 'canal.dart';
 import 'transporte.dart';
 
@@ -123,6 +124,7 @@ class TelaoExterno extends ChangeNotifier {
   }
 
   void _evento(String? nome) {
+    Diagnostico.log(nome == null ? 'telão desconectado' : 'telão conectado: $nome');
     if (nome != null) {
       conectado = nome;
       _frame = -1;

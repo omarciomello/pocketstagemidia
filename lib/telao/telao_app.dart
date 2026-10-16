@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:pocketstage_midia_core/pocketstage_midia_core.dart';
 
 import '../media/android_player.dart';
+import '../diagnostico.dart';
 import '../theme.dart';
 import '../media/backend.dart';
 import '../ui/stage_view.dart';
@@ -75,6 +76,7 @@ class _TelaoAppState extends State<TelaoApp> {
   }
 
   void _msg(Map<String, dynamic> m) {
+    if (m['t'] != 'gain') Diagnostico.log('recebeu ${m['t']}');
     final id = m['id'] is num ? (m['id'] as num).toInt() : -1;
     switch (m['t']) {
       case 'fechar':

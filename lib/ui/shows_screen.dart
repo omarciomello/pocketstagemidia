@@ -100,6 +100,8 @@ class ShowsScreen extends StatelessWidget {
                                   _editar(context, s);
                                 case 'exportar':
                                   exportarShow(context, app, s);
+                                case 'completo':
+                                  exportarShow(context, app, s, completo: true);
                                 case 'excluir':
                                   _excluir(context, s);
                               }
@@ -107,7 +109,8 @@ class ShowsScreen extends StatelessWidget {
                             itemBuilder: (_) => const [
                               PopupMenuItem(value: 'abrir', child: Text('Abrir')),
                               PopupMenuItem(value: 'editar', child: Text('Editar')),
-                              PopupMenuItem(value: 'exportar', child: Text('Exportar')),
+                              PopupMenuItem(value: 'exportar', child: Text('Exportar show')),
+                              PopupMenuItem(value: 'completo', child: Text('Exportar show completo')),
                               PopupMenuItem(value: 'excluir', child: Text('Excluir', style: TextStyle(color: Cores.vermelho))),
                             ],
                           ),

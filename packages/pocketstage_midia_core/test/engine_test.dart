@@ -534,6 +534,17 @@ void main() {
       expect(h.msgs.last, 'Nenhum show carregado.');
     });
 
+    test('salvar o show em uso não para o que está tocando', () {
+      final h = H()..load({0: audio('a1'), 1: audio('a2')});
+      h.go('a1');
+      final s = h.e.show!;
+      final cells = List<Cue?>.of(s.cells)..[1] = audio('a2', name: 'Novo nome');
+      h.e.updateShow(s.copyWith(cells: cells));
+      expect(h.col(0), 'a1');
+      expect(h.be.last('a1').disposed, isFalse);
+      expect(h.e.show!.cells[1]!.name, 'Novo nome');
+    });
+
     test('o estado vira JSON', () {
       final h = H()..load({0: audio('a1')});
       h.go('a1');

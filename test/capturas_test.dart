@@ -66,16 +66,16 @@ Future<void> _fontes() async {
 
 Show _show() {
   String id(int i) => 'c$i';
-  final caio = 'L2';
+  const caio = 'L2';
   final c = List<Cue?>.filled(maxCells, null);
   c[0] = Cue(id: id(0), uri: '/x.wav', name: '1º sinal', kind: MediaKind.audio, color: '#E2604F', hotkey: '1', fadeOut: false);
   c[1] = Cue(id: id(1), uri: '/x.wav', name: 'Tom de espera', kind: MediaKind.audio, loop: true, fadeIn: true);
   c[2] = Cue(id: id(2), uri: '/x.png', name: 'Cartaz do show', kind: MediaKind.image, fadeIn: true);
   c[3] = Cue(id: id(3), uri: '', name: 'Desliguem os celulares', kind: MediaKind.text, text: 'Desliguem os celulares', autoStopSec: 8, note: 'sai sozinho em 8 s');
   c[4] = Cue(id: id(4), uri: '/x.wav', name: '2º sinal', kind: MediaKind.audio, color: '#E2604F', hotkey: '2');
-  c[5] = Cue(id: id(5), uri: '/x.wav', name: 'Vinheta Caio', kind: MediaKind.audio, linkId: caio, role: Role.entrada, visualId: id(6), color: '#E8C547', note: 'quando o MC chamar', duckDb: -10);
+  c[5] = Cue(id: id(5), uri: '/x.wav', name: 'Vinheta de entrada', kind: MediaKind.audio, linkId: caio, role: Role.entrada, visualId: id(6), color: '#E8C547', note: 'quando o apresentador chamar', duckDb: -10);
   c[6] = Cue(id: id(6), uri: '/x.png', name: 'Fundo céu noturno', kind: MediaKind.image, linkId: caio, role: Role.fundo);
-  c[7] = Cue(id: id(7), uri: '', name: 'Caio Vidal', kind: MediaKind.text, text: 'Caio Vidal\nstand-up · 10 min', textPos: TextPos.right, textSize: TextSize.g, linkId: caio, role: Role.entrada);
+  c[7] = Cue(id: id(7), uri: '', name: 'Comediante 01', kind: MediaKind.text, text: 'Comediante 01\nstand-up · 10 min', textPos: TextPos.right, textSize: TextSize.g, linkId: caio, role: Role.entrada);
   c[8] = Cue(id: id(8), uri: '/x.wav', name: '3º sinal', kind: MediaKind.audio, color: '#E2604F', hotkey: '3');
   c[9] = Cue(id: id(9), uri: '/x.wav', name: 'Ruído de plateia', kind: MediaKind.audio, lockAfter: true);
   c[10] = Cue(id: id(10), uri: '/x.mp4', name: 'Abertura em vídeo', kind: MediaKind.video);
@@ -88,8 +88,8 @@ Show _show() {
     date: '2026-10-17',
     start: '21:00',
     lineup: [
-      LineupItem({'id': 'L1', 'name': 'Abertura · MC Duda'}),
-      LineupItem({'id': caio, 'name': 'Caio Vidal'}),
+      LineupItem({'id': 'L1', 'name': 'Abertura'}),
+      LineupItem({'id': caio, 'name': 'Comediante 01'}),
     ],
   );
 }

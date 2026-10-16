@@ -9,6 +9,7 @@ import 'package:screen_retriever/screen_retriever.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:window_manager/window_manager.dart';
 
+import 'diagnostico.dart';
 import 'state.dart';
 import 'telao/telao_app.dart';
 import 'telao/transporte.dart';
@@ -37,7 +38,54 @@ Future<void> main(List<String> args) async {
     await sessao.configure(const AudioSessionConfiguration.music());
   } catch (_) {}
   final app = await AppState.create();
+  if (Platform.isWindows || Platform.isMacOS) {
+    await Diagnostico.iniciar('mesa');
+    // Fechar a janela pergunta antes (tudo já está salvo automaticamente).
+    try {
+      await windowManager.ensureInitialized();
+      await windowManager.setPreventClose(true);
+      windowManager.addListener(_FecharMesa(app));
+    } catch (_) {}
+  }
   runApp(PocketStageMidia(app: app));
+}
+
+final GlobalKey<NavigatorState> chaveNavegacao = GlobalKey<NavigatorState>();
+
+class _FecharMesa with WindowListener {
+  _FecharMesa(this.app);
+  final AppState app;
+  bool _perguntando = false;
+
+  @override
+  void onWindowClose() async {
+    if (_perguntando) return;
+    final ctx = chaveNavegacao.currentContext;
+    var ok = true;
+    if (app.settings.confirmExit && ctx != null) {
+      _perguntando = true;
+      ok = await showDialog<bool>(
+            context: ctx,
+            builder: (c) => AlertDialog(
+              title: const Text('Fechar o PocketStage Mídia?', style: TextStyle(fontWeight: FontWeight.w800)),
+              content: const Text('Tudo já está salvo. O que estiver tocando para e o telão fecha.',
+                  style: TextStyle(color: Color(0xFF8B8F9E), height: 1.4)),
+              actions: [
+                TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('Cancelar')),
+                FilledButton(onPressed: () => Navigator.pop(c, true), child: const Text('Fechar')),
+              ],
+            ),
+          ) ??
+          false;
+      _perguntando = false;
+    }
+    if (!ok) return;
+    Diagnostico.log('fechando o app');
+    app.telao?.janela?.fechar();
+    app.engine.hardStop();
+    await Future<void>.delayed(const Duration(milliseconds: 300));
+    await windowManager.destroy();
+  }
 }
 
 /// Entrada do telão externo (segundo motor, aberto pelo Android no monitor HDMI).
@@ -51,6 +99,7 @@ void telaoMain() {
 /// Windows: a janela é posta no monitor do telão por código nativo (canal psm/janela),
 /// em pixels reais e em dois passos, para não ficar entre dois monitores de escalas diferentes.
 Future<void> telaoWindows() async {
+  await Diagnostico.iniciar('telao');
   const janela = MethodChannel('psm/janela');
   var nome = 'janela';
   try {
@@ -131,6 +180,7 @@ class PocketStageMidia extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: chaveNavegacao,
       title: 'PocketStage Mídia',
       debugShowCheckedModeBanner: false,
       theme: temaPocketStage(),

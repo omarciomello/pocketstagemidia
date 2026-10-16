@@ -8,6 +8,7 @@ import 'package:pocketstage_midia_core/pocketstage_midia_core.dart';
 
 import 'data/sample.dart';
 import 'data/store.dart';
+import 'diagnostico.dart';
 import 'media/android_player.dart';
 import 'media/backend.dart';
 import 'telao/externo.dart';
@@ -82,6 +83,7 @@ class AppState extends ChangeNotifier {
     engine.log.listen((e) {
       final id = engine.show?.id;
       if (id != null) store.appendLog(id, e);
+      Diagnostico.log('${e.type} · ${e.text}');
     });
     engine.messages.listen(toast);
     engine.changes.listen((_) => notifyListeners());
@@ -166,9 +168,22 @@ class AppState extends ChangeNotifier {
     } else {
       shows.insert(0, saved);
     }
-    if (engine.show?.id == saved.id) engine.loadShow(saved);
+    if (engine.show?.id == saved.id) engine.updateShow(saved);
+    _faltando.remove(saved.id);
     notifyListeners();
   }
+
+  final Map<String, Set<String>> _faltando = {};
+
+  /// Ids das mídias do show cujo arquivo não existe (importado sem mídias, arquivo movido…).
+  Set<String> faltando(Show s) => _faltando.putIfAbsent(s.id, () {
+        final out = <String>{};
+        for (final c in s.cells.take(s.count)) {
+          if (c == null || c.kind == MediaKind.text) continue;
+          if (c.uri.isEmpty || !File(PsShow.localPath(c.uri)).existsSync()) out.add(c.id);
+        }
+        return out;
+      });
 
   /// Desfaz arquivos copiados por uma edição cancelada.
   void discardEdit(Show draft) {
@@ -224,10 +239,10 @@ class AppState extends ChangeNotifier {
   // ---------- exportar e importar ----------
 
   /// Gera o .psshow e devolve o caminho e quantas mídias faltaram.
-  Future<ExportResult> exportShow(Show s) {
+  Future<ExportResult> exportShow(Show s, {bool completo = true}) {
     final log = store.loadLog(s.id);
     final dir = store.exportDir.path;
-    return _exportar(s, log, dir);
+    return _exportar(s, log, dir, completo);
   }
 
   Future<Show> importShow(String path) async {
@@ -242,6 +257,7 @@ class AppState extends ChangeNotifier {
 }
 
 // Fora da classe, para a cópia de arquivos rodar em outro isolate sem levar o estado junto.
-Future<ExportResult> _exportar(Show s, List<LogEntry> log, String dir) => Isolate.run(() => PsShow.exportTo(s, log, dir));
+Future<ExportResult> _exportar(Show s, List<LogEntry> log, String dir, bool completo) =>
+    Isolate.run(() => PsShow.exportTo(s, log, dir, withMedia: completo));
 
 Future<ImportResult> _importar(String path, String root) => Isolate.run(() => PsShow.importFile(path, root));

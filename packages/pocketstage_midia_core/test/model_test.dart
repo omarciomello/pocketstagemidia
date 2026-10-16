@@ -107,6 +107,8 @@ void main() {
         'date': '2026-10-20',
         'start': '21:00',
         'eventType': 'standup',
+        'local': 'Teatro X',
+        'showType': 'elenco',
         'lineup': [
           {'id': 'L1', 'name': 'Caio Vidal', 'kind': 'artista', 'minutos': 12},
         ],
@@ -131,6 +133,9 @@ void main() {
       expect(o['format'], 'pocketstage.show');
       expect(o['version'], 1);
       expect(o['date'], '2026-10-20');
+      expect(o['local'], 'Teatro X');
+      expect(o['showType'], 'elenco');
+      expect(s.local, 'Teatro X');
       expect((o['lineup'] as List).first['minutos'], 12);
       expect(o['producao'], {'local': 'Teatro X'});
       expect((o['media'] as Map)['count'], 8);

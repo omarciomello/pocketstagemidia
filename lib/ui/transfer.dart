@@ -8,14 +8,32 @@ import 'package:share_plus/share_plus.dart';
 import '../state.dart';
 import 'widgets.dart';
 
+String _tamanho(int b) {
+  if (b < 1024 * 1024) return '${(b / 1024).ceil()} KB';
+  if (b < 1024 * 1024 * 1024) return '${(b / 1024 / 1024).toStringAsFixed(1).replaceAll('.', ',')} MB';
+  return '${(b / 1024 / 1024 / 1024).toStringAsFixed(2).replaceAll('.', ',')} GB';
+}
+
 /// Exporta o show como .psshow: no celular abre o compartilhar; no computador, "Salvar como".
-Future<void> exportarShow(BuildContext context, AppState app, Show s) async {
+/// [completo] = com todas as mídias; sem ele, só a estrutura do show.
+Future<void> exportarShow(BuildContext context, AppState app, Show s, {bool completo = false}) async {
+  if (completo) {
+    final tam = PsShow.mediaSize(s);
+    final ok = await confirmar(
+      context,
+      'Exportar show completo',
+      'O arquivo leva todas as mídias e vai ter cerca de ${_tamanho(tam)}.'
+          '${tam > 200 * 1024 * 1024 ? ' Vídeos deixam o arquivo grande; pode demorar.' : ''}',
+      ok: 'Exportar',
+    );
+    if (!ok || !context.mounted) return;
+  }
   aviso(context, 'Preparando o arquivo…');
   final box = context.findRenderObject() as RenderBox?;
   final origem = box == null ? null : box.localToGlobal(Offset.zero) & box.size;
   ExportResult r;
   try {
-    r = await app.exportShow(s);
+    r = await app.exportShow(s, completo: completo);
   } on ArchiveError catch (e) {
     if (context.mounted) aviso(context, e.message);
     return;
@@ -34,9 +52,11 @@ Future<void> exportarShow(BuildContext context, AppState app, Show s) async {
   if (!context.mounted) return;
   aviso(
     context,
-    r.missing > 0
-        ? 'Show exportado. ${r.missing} mídia(s) não foram encontradas e ficaram de fora.'
-        : 'Show exportado.',
+    !completo
+        ? 'Show exportado (só a estrutura, sem as mídias).'
+        : r.missing > 0
+            ? 'Show exportado. ${r.missing} mídia(s) não foram encontradas e ficaram de fora.'
+            : 'Show exportado com todas as mídias.',
   );
 }
 
