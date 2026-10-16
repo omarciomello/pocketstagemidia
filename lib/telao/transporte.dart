@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:desktop_multi_window/desktop_multi_window.dart';
 
@@ -86,7 +87,12 @@ class JanelaTelao implements TransporteMesa {
     if (_janela != null) return;
     Diagnostico.log('abrindo janela do telão');
     try {
-      _janela = await WindowController.create(const WindowConfiguration(arguments: 'telao', hiddenAtLaunch: true));
+      final v = Platform.environment['PSM_VARIANTE'] ?? '';
+      _janela = await WindowController.create(
+          WindowConfiguration(arguments: 'telao', hiddenAtLaunch: v != 'vazia' && v != 'sem-nativo'));
+      if (v == 'vazia') {
+        Timer(const Duration(seconds: 1), () => _eventos.add('vazia'));
+      }
       Timer(const Duration(seconds: 10), () {
         if (_janela != null && !_aberta) _erros.add('O telão não respondeu. Feche a janela dele e tente de novo.');
       });

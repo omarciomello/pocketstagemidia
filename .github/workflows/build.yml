@@ -135,25 +135,29 @@ jobs:
           }
           "@
           $exe = Get-ChildItem build/windows/x64/runner/Release/*.exe | Select-Object -First 1
-          $p = Start-Process $exe.FullName -PassThru
-          New-Item -ItemType Directory -Force cap | Out-Null
           Add-Type -AssemblyName System.Windows.Forms
-          # 4s: clique no 1º sinal (antes do telão) · 6s: abre o telão · 11s e 15s: cliques de novo · 19s: Parar tudo
-          $plano = @{ 4 = @(145, 170); 11 = @(145, 170); 15 = @(145, 265); 19 = @(935, 56) }
-          foreach ($s in 3, 4, 5, 8, 11, 12, 15, 16, 19, 20, 24) {
-            $falta = $s - ((Get-Date) - $p.StartTime).TotalSeconds
-            if ($falta -gt 0) { Start-Sleep -Milliseconds ([int]($falta * 1000)) }
-            $m = [Win]::Achar([uint32]$p.Id, "pocketstage_midia")
-            if ($plano.ContainsKey($s) -and $m -ne [IntPtr]::Zero) { [Win]::Clique($m, $plano[$s][0], $plano[$s][1]); "${s}s clique em $($plano[$s])" | Tee-Object -Append cap/estado.txt; Start-Sleep -Milliseconds 400 }
-            $b = [System.Windows.Forms.SystemInformation]::VirtualScreen
-            $bmp = New-Object System.Drawing.Bitmap $b.Width, $b.Height
-            $g = [System.Drawing.Graphics]::FromImage($bmp); $g.CopyFromScreen($b.Left, $b.Top, 0, 0, $bmp.Size); $bmp.Save("cap/tela_$s.png")
-            "${s}s · janelas: $([Win]::Lista([uint32]$p.Id))" | Tee-Object -Append cap/estado.txt
+          $docs = [Environment]::GetFolderPath('MyDocuments')
+          foreach ($v in "atual", "sem-nativo", "vazia") {
+            $env:PSM_VARIANTE = $v
+            Remove-Item "$docs\PocketStage-Midia-*.txt" -ErrorAction SilentlyContinue
+            New-Item -ItemType Directory -Force "cap/$v" | Out-Null
+            $p = Start-Process $exe.FullName -PassThru
+            # 4s: clique no 1º sinal (antes do telão) · 6s: abre o telão · 11s e 15s: cliques · 19s: Parar tudo
+            $plano = @{ 4 = @(145, 170); 11 = @(145, 170); 15 = @(145, 265); 19 = @(935, 56) }
+            foreach ($s in 3, 4, 8, 11, 12, 15, 19, 21) {
+              $falta = $s - ((Get-Date) - $p.StartTime).TotalSeconds
+              if ($falta -gt 0) { Start-Sleep -Milliseconds ([int]($falta * 1000)) }
+              $m = [Win]::Achar([uint32]$p.Id, "pocketstage_midia")
+              if ($plano.ContainsKey($s) -and $m -ne [IntPtr]::Zero) { [Win]::Clique($m, $plano[$s][0], $plano[$s][1]); "${s}s clique" | Out-File -Append -Encoding utf8 "cap/$v/estado.txt"; Start-Sleep -Milliseconds 400 }
+              $b = [System.Windows.Forms.SystemInformation]::VirtualScreen
+              $bmp = New-Object System.Drawing.Bitmap $b.Width, $b.Height
+              $g = [System.Drawing.Graphics]::FromImage($bmp); $g.CopyFromScreen($b.Left, $b.Top, 0, 0, $bmp.Size); $bmp.Save("cap/$v/tela_$s.png")
+              "${s}s janelas: $([Win]::Lista([uint32]$p.Id))" | Out-File -Append -Encoding utf8 "cap/$v/estado.txt"
+            }
+            Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue
+            Start-Sleep -Seconds 2
+            Copy-Item "$docs\PocketStage-Midia-mesa.txt" "cap/$v/diag-mesa.txt" -ErrorAction SilentlyContinue
           }
-          Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue
-          Copy-Item "$env:TEMP\psm_mesa.log" cap/mesa.log -ErrorAction SilentlyContinue
-          Copy-Item "$([Environment]::GetFolderPath('MyDocuments'))\PocketStage-Midia-mesa.txt" cap/diag-mesa.txt -ErrorAction SilentlyContinue
-          Copy-Item "$([Environment]::GetFolderPath('MyDocuments'))\PocketStage-Midia-telao.txt" cap/diag-telao.txt -ErrorAction SilentlyContinue
       - name: Publicar capturas do Windows
         if: always()
         shell: bash
