@@ -75,9 +75,12 @@ class _CronometroBoxState extends State<CronometroBox> {
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         Row(children: [
-          Text('CRONÔMETRO',
-              style: TextStyle(color: Cores.textoFraco, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 1.4)),
-          const Spacer(),
+          Expanded(
+            child: Text('CRONÔMETRO',
+                maxLines: 1,
+                overflow: TextOverflow.clip,
+                style: TextStyle(color: Cores.textoFraco, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 1.4)),
+          ),
           Text('SHOW ', style: TextStyle(color: Cores.textoApagado, fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 1)),
           Text(c.tempoDeShow(agora), style: mono(size: 12, color: Cores.textoFraco)),
         ]),
@@ -121,9 +124,12 @@ class _CronometroBoxState extends State<CronometroBox> {
             ),
           ],
           const SizedBox(height: 10),
-          Row(children: [
+          LayoutBuilder(builder: (_, box) {
+            // painel estreito (celular deitado): só os ícones
+            final curto = box.maxWidth < 260;
+            return Row(children: [
             Expanded(
-              child: Btn('Play',
+              child: Btn(curto ? '' : 'Play',
                   icon: Icons.play_arrow,
                   compacto: true,
                   tipo: c.run.running ? BtnTipo.ligado : BtnTipo.normal,
@@ -133,19 +139,20 @@ class _CronometroBoxState extends State<CronometroBox> {
             ),
             const SizedBox(width: 6),
             Expanded(
-              child: Btn('Pause',
+              child: Btn(curto ? '' : 'Pause',
                   icon: Icons.pause,
                   compacto: true,
                   onTap: travado || !c.run.running ? null : () => cmd((c, a) => c.pause(a))),
             ),
             const SizedBox(width: 6),
             Expanded(
-              child: Btn('Stop',
+              child: Btn(curto ? '' : 'Stop',
                   icon: Icons.stop,
                   compacto: true,
                   onTap: travado || atual == null ? null : () => cmd((c, a) => c.stop(a))),
             ),
-          ]),
+          ]);
+          }),
           const SizedBox(height: 6),
           Btn(c.run.regressiva ? 'Regressiva' : 'Progressiva',
               icon: c.run.regressiva ? Icons.south : Icons.north,
