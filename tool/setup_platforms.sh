@@ -58,7 +58,7 @@ fi
 FW=windows/runner/flutter_window.cpp
 if [ -f "$FW" ] && ! grep -q 'DesktopMultiWindowSetWindowCreatedCallback' "$FW"; then
   perl -0pi -e 's|(#include "flutter_window.h"\r?\n)|$1#include "desktop_multi_window/desktop_multi_window_plugin.h"\n|' "$FW"
-  perl -0pi -e 's|(RegisterPlugins\(flutter_controller_->engine\(\)\);\r?\n)|$1  DesktopMultiWindowSetWindowCreatedCallback([](void *controller) {\n    auto *flutter_view_controller = reinterpret_cast<flutter::FlutterViewController *>(controller);\n    RegisterPluginsTelao(flutter_view_controller->engine());\n    PsmJanelaRegistrar(flutter_view_controller->engine()->messenger(), flutter_view_controller->view()->GetNativeWindow());\n  });\n|' "$FW"
+  perl -0pi -e 's|(RegisterPlugins\(flutter_controller_->engine\(\)\);\r?\n)|$1  DesktopMultiWindowSetWindowCreatedCallback([](void *controller) {\n    auto *flutter_view_controller = reinterpret_cast<flutter::FlutterViewController *>(controller);\n    { char v[32] = {0}; size_t n = 0; getenv_s(&n, v, sizeof(v), "PSM_VARIANTE"); if (strcmp(v, "nada") != 0) RegisterPluginsTelao(flutter_view_controller->engine()); }\n    PsmJanelaRegistrar(flutter_view_controller->engine()->messenger(), flutter_view_controller->view()->GetNativeWindow());\n  });\n|' "$FW"
   perl -0pi -e 's|(#include "flutter_window.h"\r?\n)|$1#include "psm_janela.h"\n#include <flutter/plugin_registry.h>\nvoid RegisterPluginsTelao(flutter::PluginRegistry* registry);\n|' "$FW"
   grep -q 'DesktopMultiWindowSetWindowCreatedCallback' "$FW" || { echo "ERRO: não consegui ajustar $FW"; case "$(uname -s)" in MINGW*|MSYS*|CYGWIN*) exit 1;; esac; }
 fi
