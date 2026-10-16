@@ -69,17 +69,21 @@ class AppState extends ChangeNotifier {
 
   Future<void> _init() async {
     shows = store.loadShows();
-    if (shows.isEmpty && !store.sampleCreated) {
+    // Primeira vez: cria o exemplo e abre nele. Exemplo novo numa versão nova: acrescenta
+    // na lista, sem mexer no exemplo antigo (que o operador pode ter editado).
+    final primeira = shows.isEmpty && !store.sampleCreated;
+    if (primeira || (store.sampleCreated && store.sampleVersion < versaoExemplo)) {
       try {
         final sample = await createSampleShow(store);
         store.saveShow(sample);
         store.sampleCreated = true;
-        shows = [sample];
-        store.activeId = sample.id;
+        shows.insert(0, sample);
+        if (primeira) store.activeId = sample.id;
       } catch (_) {
         // sem o exemplo, o app abre na lista de shows
       }
     }
+    store.sampleVersion = versaoExemplo;
     engine.log.listen((e) {
       final id = engine.show?.id;
       if (id != null) store.appendLog(id, e);

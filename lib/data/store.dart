@@ -136,6 +136,10 @@ class Store {
   bool get sampleCreated => _readPrefs()['sample'] == true;
   set sampleCreated(bool v) => _writePrefs({..._readPrefs(), 'sample': v});
 
+  /// Versão do show de exemplo já criada (0 = nenhuma ou a primeira).
+  int get sampleVersion => (_readPrefs()['sampleVersion'] as num?)?.toInt() ?? 0;
+  set sampleVersion(int v) => _writePrefs({..._readPrefs(), 'sampleVersion': v});
+
   void _writeAtomic(File f, String text) {
     final tmp = File('${f.path}.tmp');
     tmp.writeAsStringSync(text, flush: true);
