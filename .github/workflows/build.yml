@@ -97,7 +97,10 @@ jobs:
       - run: bash tool/ci_run.sh "build" flutter build windows --release
       - name: Capturas do Windows (mesa + telão)
         shell: pwsh
+        continue-on-error: true
         run: |
+          New-Item -ItemType Directory -Force cap | Out-Null
+          Start-Transcript -Path cap/transcript.txt
           $env:PSM_AUTOTESTE = "1"
           Remove-Item "$env:TEMP\psm_mesa.log" -ErrorAction SilentlyContinue
           Add-Type -ReferencedAssemblies System.Drawing -TypeDefinition @"
@@ -145,6 +148,7 @@ jobs:
           Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue
           Copy-Item "$env:TEMP\psm_mesa.log" cap/mesa.log -ErrorAction SilentlyContinue
       - name: Publicar capturas do Windows
+        if: always()
         shell: bash
         run: |
           cd cap
