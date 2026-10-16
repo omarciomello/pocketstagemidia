@@ -150,7 +150,8 @@ class AppState extends ChangeNotifier {
   // ---------- shows salvos ----------
 
   void saveShow(Show s) {
-    final saved = s.copyWith(updatedAt: DateTime.now().millisecondsSinceEpoch);
+    // O cronômetro não é editado no editor: vale o que está guardado.
+    final saved = s.copyWith(updatedAt: DateTime.now().millisecondsSinceEpoch, run: byId(s.id)?.run);
     store.saveShow(saved);
     if (copiesMedia) store.cleanMedia(saved);
     final i = shows.indexWhere((x) => x.id == saved.id);
@@ -197,6 +198,30 @@ class AppState extends ChangeNotifier {
   /// Copia (no celular) ou referencia (no computador) um arquivo escolhido para uma mídia.
   String prepareMedia(String showId, String cueId, String src) =>
       copiesMedia ? store.copyMedia(showId, cueId, src) : src;
+
+  // ---------- cronômetro ----------
+
+  /// Cronômetro do show em uso (modelo `run` do PocketStage).
+  Cronometro get cronometro => Cronometro(active?.lineup ?? const [], active?.run ?? const Run());
+
+  /// Aplica um comando do cronômetro: guarda o `run` no show e registra no log.
+  void cronometroCmd(RunPasso Function(Cronometro c, int agora) cmd) {
+    final s = active;
+    if (s == null) return;
+    final agora = DateTime.now().millisecondsSinceEpoch;
+    final p = cmd(cronometro, agora);
+    for (final t in p.log) {
+      final e = LogEntry(t: agora, type: 'timer', ref: p.run.curId, linkId: p.run.curId, text: t);
+      store.appendLog(s.id, e);
+      Diagnostico.log('timer · $t');
+    }
+    if (p.run == s.run) return;
+    final novo = s.copyWith(run: p.run);
+    store.saveShow(novo);
+    final i = shows.indexWhere((x) => x.id == novo.id);
+    if (i >= 0) shows[i] = novo;
+    engine.updateShow(novo);
+  }
 
   // ---------- ajustes ----------
 

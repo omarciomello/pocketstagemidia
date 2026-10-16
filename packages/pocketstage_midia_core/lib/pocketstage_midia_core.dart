@@ -3,6 +3,7 @@ library;
 
 export 'src/archive.dart';
 export 'src/backend.dart';
+export 'src/cronometro.dart';
 export 'src/engine.dart';
 export 'src/keys.dart';
 export 'src/levels.dart';

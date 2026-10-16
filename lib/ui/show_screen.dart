@@ -10,6 +10,7 @@ import '../media/android_player.dart';
 import '../diagnostico.dart';
 import '../state.dart';
 import '../theme.dart';
+import 'cronometro_box.dart';
 import 'editor_screen.dart';
 import 'settings_screen.dart';
 import 'shows_screen.dart';
@@ -450,6 +451,8 @@ class _ShowScreenState extends State<ShowScreen> {
       else
         Btn('Telão em tela cheia',
             onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => TelaoCheio(stage: app.stage)))),
+      const SizedBox(height: 14),
+      CronometroBox(app: app),
     ]);
   }
 

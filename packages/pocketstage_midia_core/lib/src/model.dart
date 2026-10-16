@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:math';
 
+import 'cronometro.dart';
+
 /// Colunas fixas da grade.
 const int cols = 4;
 
@@ -559,12 +561,17 @@ class LineupItem {
   String get id => _s(raw, 'id');
   String get name => _s(raw, 'name');
   String get kind => _s(raw, 'kind');
+
+  /// Tempos da fila, em minutos.
+  double get min => _d(raw, 'min', 0);
+  double get yel => _d(raw, 'yel', 0);
+  double get red => _d(raw, 'red', 0);
 }
 
 // ---------- show ----------
 
 const Set<String> _showKeys = {
-  'id', 'name', 'lineup', 'media', 'updatedAt', 'count', 'cells', 'format', 'version',
+  'id', 'name', 'lineup', 'media', 'updatedAt', 'count', 'cells', 'format', 'version', 'run',
 };
 const List<String> _showOptional = ['date', 'start', 'eventType', 'local', 'showType'];
 
@@ -590,6 +597,9 @@ class Show {
   /// "solo", "elenco" ou "festival".
   final String? showType;
   final List<LineupItem> lineup;
+
+  /// Cronômetro de palco (modelo `run` do PocketStage); null até o primeiro uso.
+  final Run? run;
   final int updatedAt;
   final Map<String, dynamic>? extra;
 
@@ -604,6 +614,7 @@ class Show {
     this.local,
     this.showType,
     this.lineup = const [],
+    this.run,
     this.updatedAt = 0,
     this.extra,
   }) : cells = List<Cue?>.unmodifiable(
@@ -650,6 +661,7 @@ class Show {
     List<Cue?>? cells,
     int? updatedAt,
     List<LineupItem>? lineup,
+    Run? run,
   }) =>
       Show(
         id: id ?? this.id,
@@ -662,6 +674,7 @@ class Show {
         local: local,
         showType: showType,
         lineup: lineup ?? this.lineup,
+        run: run ?? this.run,
         updatedAt: updatedAt ?? this.updatedAt,
         extra: extra,
       );
@@ -684,6 +697,7 @@ class Show {
       'count': count,
       'cells': [for (final c in cells) c?.toJson()],
     };
+    if (run != null) o['run'] = run!.toJson();
     o['updatedAt'] = updatedAt;
     extra?.forEach((k, v) => o.putIfAbsent(k, () => deepCopyJson(v)));
     return o;
@@ -733,6 +747,7 @@ class Show {
       local: o['local'] is String ? o['local'] as String : null,
       showType: o['showType'] is String ? o['showType'] as String : null,
       lineup: lineup,
+      run: _obj(o['run']) == null ? null : Run.fromJson(_obj(o['run'])!),
       updatedAt: _i(o, 'updatedAt', 0),
       extra: extra.isEmpty ? null : extra,
     );
