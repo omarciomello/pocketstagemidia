@@ -58,14 +58,19 @@ fi
 FW=windows/runner/flutter_window.cpp
 if [ -f "$FW" ] && ! grep -q 'DesktopMultiWindowSetWindowCreatedCallback' "$FW"; then
   perl -0pi -e 's|(#include "flutter_window.h"\r?\n)|$1#include "desktop_multi_window/desktop_multi_window_plugin.h"\n|' "$FW"
-  perl -0pi -e 's|(RegisterPlugins\(flutter_controller_->engine\(\)\);\r?\n)|$1  DesktopMultiWindowSetWindowCreatedCallback([](void *controller) {\n    auto *flutter_view_controller = reinterpret_cast<flutter::FlutterViewController *>(controller);\n    RegisterPlugins(flutter_view_controller->engine());\n    PsmJanelaRegistrar(flutter_view_controller->engine()->messenger(), flutter_view_controller->view()->GetNativeWindow());\n  });\n|' "$FW"
-  perl -0pi -e 's|(#include "flutter_window.h"\r?\n)|$1#include "psm_janela.h"\n|' "$FW"
+  perl -0pi -e 's|(RegisterPlugins\(flutter_controller_->engine\(\)\);\r?\n)|$1  DesktopMultiWindowSetWindowCreatedCallback([](void *controller) {\n    auto *flutter_view_controller = reinterpret_cast<flutter::FlutterViewController *>(controller);\n    RegisterPluginsTelao(flutter_view_controller->engine());\n    PsmJanelaRegistrar(flutter_view_controller->engine()->messenger(), flutter_view_controller->view()->GetNativeWindow());\n  });\n|' "$FW"
+  perl -0pi -e 's|(#include "flutter_window.h"\r?\n)|$1#include "psm_janela.h"\n#include <flutter/plugin_registry.h>\nvoid RegisterPluginsTelao(flutter::PluginRegistry* registry);\n|' "$FW"
   grep -q 'DesktopMultiWindowSetWindowCreatedCallback' "$FW" || { echo "ERRO: não consegui ajustar $FW"; case "$(uname -s)" in MINGW*|MSYS*|CYGWIN*) exit 1;; esac; }
 fi
 if [ -d windows/runner ]; then
   cp tool/windows/psm_janela.h tool/windows/psm_janela.cpp windows/runner/
+  # Janela do telão: só os plugins de que ela precisa (player e canal entre janelas).
+  GPR=windows/flutter/generated_plugin_registrant.cc
+  [ -f "$GPR" ] || flutter pub get >/dev/null
+  perl -0pe 's/void RegisterPlugins\(/void RegisterPluginsTelao(/; s/#include "generated_plugin_registrant.h"/#include <flutter\/plugin_registry.h>/; s/(\n[ \t]*(\w+)RegisterWithRegistrar\(\s*registry->GetRegistrarForPlugin\("[^"]*"\)\);)/ my ($t, $n) = ($1, $2); ($n =~ m{MediaKit|DesktopMultiWindow}) ? $t : "" /ge' "$GPR" > windows/runner/psm_plugins_telao.cpp
+  echo "--- plugins do telão:"; grep -n 'RegisterWithRegistrar' windows/runner/psm_plugins_telao.cpp || true
   RC=windows/runner/CMakeLists.txt
-  grep -q 'psm_janela.cpp' "$RC" || perl -0pi -e 's|("flutter_window.cpp"\r?\n)|$1  "psm_janela.cpp"\n|' "$RC"
+  grep -q 'psm_janela.cpp' "$RC" || perl -0pi -e 's|("flutter_window.cpp"\r?\n)|$1  "psm_janela.cpp"\n  "psm_plugins_telao.cpp"\n|' "$RC"
   grep -q 'psm_janela.cpp' "$RC" || { echo "ERRO: não consegui ajustar $RC"; case "$(uname -s)" in MINGW*|MSYS*|CYGWIN*) exit 1;; esac; }
 fi
 MW=macos/Runner/MainFlutterWindow.swift
