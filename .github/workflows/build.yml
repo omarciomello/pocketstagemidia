@@ -59,6 +59,9 @@ jobs:
   android:
     needs: checar
     runs-on: ubuntu-latest
+    env:
+      PSM_KEYSTORE_B64: ${{ secrets.PSM_KEYSTORE_B64 }}
+      PSM_KEY_PASSWORD: ${{ secrets.PSM_KEY_PASSWORD }}
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-java@v5
@@ -71,11 +74,14 @@ jobs:
           cache: true
       - run: bash tool/ci_run.sh "setup" bash tool/setup_platforms.sh
       - run: bash tool/ci_run.sh "build" flutter build apk --release
-      - run: cp build/app/outputs/flutter-apk/app-release.apk PocketStage-Midia.apk
+      - run: bash tool/ci_run.sh "build arm64" flutter build apk --release --split-per-abi --target-platform android-arm64
+      - run: |
+          cp build/app/outputs/flutter-apk/app-release.apk PocketStage-Midia.apk
+          cp build/app/outputs/flutter-apk/app-arm64-v8a-release.apk PocketStage-Midia-arm64.apk
       - uses: actions/upload-artifact@v6
         with:
           name: PocketStage-Midia-Android
-          path: PocketStage-Midia.apk
+          path: PocketStage-Midia*.apk
 
   windows:
     needs: checar
@@ -134,7 +140,7 @@ jobs:
       - name: Montar arquivos
         run: |
           mkdir -p out
-          cp dist/PocketStage-Midia-Android/PocketStage-Midia.apk out/
+          cp dist/PocketStage-Midia-Android/PocketStage-Midia*.apk out/
           (cd dist/PocketStage-Midia-Windows && zip -qr ../../out/PocketStage-Midia-Windows.zip .)
           cp dist/PocketStage-Midia-macOS/PocketStage-Midia-macOS.zip out/
           ls -la out
@@ -145,4 +151,4 @@ jobs:
           gh release delete teste -y --cleanup-tag -R "$GITHUB_REPOSITORY" || true
           gh release create teste out/* -R "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
             --title "Versão de teste (${GITHUB_SHA::7})" \
-            --notes "Última versão gerada pelo build. Android: baixe PocketStage-Midia.apk e instale. Windows: descompacte e abra o .exe. macOS: descompacte e abra o app."
+            --notes "Última versão gerada pelo build. Android: baixe PocketStage-Midia-arm64.apk (mais leve, serve na maioria dos celulares) ou PocketStage-Midia.apk (todos os aparelhos) e instale. Windows: descompacte e abra o .exe. macOS: descompacte e abra o app."
