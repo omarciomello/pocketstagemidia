@@ -48,6 +48,30 @@ void telaoMain() {
   runApp(TelaoApp());
 }
 
+/// Windows: a janela é posta no monitor do telão por código nativo (canal psm/janela),
+/// em pixels reais e em dois passos, para não ficar entre dois monitores de escalas diferentes.
+Future<void> telaoWindows() async {
+  const janela = MethodChannel('psm/janela');
+  var nome = 'janela';
+  try {
+    nome = '${await janela.invokeMethod<String>('entrar') ?? 'monitor'} · janela';
+  } catch (_) {}
+  final t = JanelaTelaoLado(nome);
+  runApp(TelaoApp(
+    transporte: t,
+    onFechar: () async {
+      t.enviar({'t': 'fechou'});
+      try {
+        await janela.invokeMethod<void>('fechar');
+      } catch (_) {}
+    },
+  ));
+  await Future<void>.delayed(const Duration(milliseconds: 500));
+  try {
+    await janela.invokeMethod<void>('ocupar');
+  } catch (_) {}
+}
+
 class _AoFechar with WindowListener {
   _AoFechar(this.t);
   final TransporteTelao t;
@@ -61,6 +85,7 @@ class _AoFechar with WindowListener {
 
 /// Computador: janela do telão, em tela cheia no segundo monitor (ou no único, se só houver um).
 Future<void> telaoDesktop() async {
+  if (Platform.isWindows) return telaoWindows();
   await windowManager.ensureInitialized();
   Display alvo;
   try {

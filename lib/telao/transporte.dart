@@ -26,6 +26,19 @@ const _paraMesa = WindowMethodChannel('psm/para-mesa', mode: ChannelMode.unidire
 /// Computador, lado da mesa: abre e fecha a janela do telão.
 class JanelaTelao implements TransporteMesa {
   JanelaTelao() {
+    // A janela do telão foi fechada (Alt+F4, por exemplo).
+    onWindowsChanged.listen((_) async {
+      final j = _janela;
+      if (j == null) return;
+      final todas = await WindowController.getAll();
+      if (!todas.any((w) => w.windowId == j.windowId)) {
+        _janela = null;
+        if (_aberta) {
+          _aberta = false;
+          _eventos.add(null);
+        }
+      }
+    });
     _paraMesa.setMethodCallHandler((call) async {
       final m = jsonDecode(call.arguments as String);
       if (m is! Map<String, dynamic>) return null;
@@ -71,6 +84,9 @@ class JanelaTelao implements TransporteMesa {
     if (_janela != null) return;
     try {
       _janela = await WindowController.create(const WindowConfiguration(arguments: 'telao', hiddenAtLaunch: true));
+      Timer(const Duration(seconds: 10), () {
+        if (_janela != null && !_aberta) _erros.add('O telão não respondeu. Feche a janela dele e tente de novo.');
+      });
     } catch (e) {
       _erros.add('Não consegui abrir a janela do telão: $e');
     }

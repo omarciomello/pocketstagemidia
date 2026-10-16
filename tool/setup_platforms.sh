@@ -58,8 +58,15 @@ fi
 FW=windows/runner/flutter_window.cpp
 if [ -f "$FW" ] && ! grep -q 'DesktopMultiWindowSetWindowCreatedCallback' "$FW"; then
   perl -0pi -e 's|(#include "flutter_window.h"\r?\n)|$1#include "desktop_multi_window/desktop_multi_window_plugin.h"\n|' "$FW"
-  perl -0pi -e 's|(RegisterPlugins\(flutter_controller_->engine\(\)\);\r?\n)|$1  DesktopMultiWindowSetWindowCreatedCallback([](void *controller) {\n    auto *flutter_view_controller = reinterpret_cast<flutter::FlutterViewController *>(controller);\n    RegisterPlugins(flutter_view_controller->engine());\n  });\n|' "$FW"
+  perl -0pi -e 's|(RegisterPlugins\(flutter_controller_->engine\(\)\);\r?\n)|$1  DesktopMultiWindowSetWindowCreatedCallback([](void *controller) {\n    auto *flutter_view_controller = reinterpret_cast<flutter::FlutterViewController *>(controller);\n    RegisterPlugins(flutter_view_controller->engine());\n    PsmJanelaRegistrar(flutter_view_controller->engine()->messenger(), flutter_view_controller->view()->GetNativeWindow());\n  });\n|' "$FW"
+  perl -0pi -e 's|(#include "flutter_window.h"\r?\n)|$1#include "psm_janela.h"\n|' "$FW"
   grep -q 'DesktopMultiWindowSetWindowCreatedCallback' "$FW" || { echo "ERRO: não consegui ajustar $FW"; case "$(uname -s)" in MINGW*|MSYS*|CYGWIN*) exit 1;; esac; }
+fi
+if [ -d windows/runner ]; then
+  cp tool/windows/psm_janela.h tool/windows/psm_janela.cpp windows/runner/
+  RC=windows/runner/CMakeLists.txt
+  grep -q 'psm_janela.cpp' "$RC" || perl -0pi -e 's|("flutter_window.cpp"\r?\n)|$1  "psm_janela.cpp"\n|' "$RC"
+  grep -q 'psm_janela.cpp' "$RC" || { echo "ERRO: não consegui ajustar $RC"; case "$(uname -s)" in MINGW*|MSYS*|CYGWIN*) exit 1;; esac; }
 fi
 MW=macos/Runner/MainFlutterWindow.swift
 if [ -f "$MW" ] && ! grep -q 'FlutterMultiWindowPlugin' "$MW"; then
