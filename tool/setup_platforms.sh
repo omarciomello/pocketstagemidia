@@ -59,13 +59,13 @@ FW=windows/runner/flutter_window.cpp
 if [ -f "$FW" ] && ! grep -q 'DesktopMultiWindowSetWindowCreatedCallback' "$FW"; then
   perl -0pi -e 's|(#include "flutter_window.h"\r?\n)|$1#include "desktop_multi_window/desktop_multi_window_plugin.h"\n|' "$FW"
   perl -0pi -e 's|(RegisterPlugins\(flutter_controller_->engine\(\)\);\r?\n)|$1  DesktopMultiWindowSetWindowCreatedCallback([](void *controller) {\n    auto *flutter_view_controller = reinterpret_cast<flutter::FlutterViewController *>(controller);\n    RegisterPlugins(flutter_view_controller->engine());\n  });\n|' "$FW"
-  grep -q 'DesktopMultiWindowSetWindowCreatedCallback' "$FW" || { echo "ERRO: não consegui ajustar $FW"; exit 1; }
+  grep -q 'DesktopMultiWindowSetWindowCreatedCallback' "$FW" || { echo "ERRO: não consegui ajustar $FW"; case "$(uname -s)" in MINGW*|MSYS*|CYGWIN*) exit 1;; esac; }
 fi
 MW=macos/Runner/MainFlutterWindow.swift
 if [ -f "$MW" ] && ! grep -q 'FlutterMultiWindowPlugin' "$MW"; then
-  perl -0pi -e 's|(import FlutterMacOS\n)|$1import desktop_multi_window\n|' "$MW"
-  perl -0pi -e 's|(RegisterGeneratedPlugins\(registry: flutterViewController\)\n)|$1    FlutterMultiWindowPlugin.setOnWindowCreatedCallback { controller in\n      RegisterGeneratedPlugins(registry: controller)\n    }\n|' "$MW"
-  grep -q 'FlutterMultiWindowPlugin' "$MW" || { echo "ERRO: não consegui ajustar $MW"; exit 1; }
+  perl -0pi -e 's|(import FlutterMacOS\r?\n)|$1import desktop_multi_window\n|' "$MW"
+  perl -0pi -e 's|(RegisterGeneratedPlugins\(registry: flutterViewController\)\r?\n)|$1    FlutterMultiWindowPlugin.setOnWindowCreatedCallback { controller in\n      RegisterGeneratedPlugins(registry: controller)\n    }\n|' "$MW"
+  grep -q 'FlutterMultiWindowPlugin' "$MW" || { echo "ERRO: não consegui ajustar $MW"; [ "$(uname -s)" = Darwin ] && exit 1; }
 fi
 
 # macOS: abrir e salvar arquivos escolhidos pelo operador
