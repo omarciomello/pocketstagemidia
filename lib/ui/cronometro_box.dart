@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:pocketstage_midia_core/pocketstage_midia_core.dart';
 
 import '../state.dart';
 import '../theme.dart';
