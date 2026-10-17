@@ -23,7 +23,7 @@ Limites: no iPhone/iPad o app não escolhe a saída de áudio (abre o seletor do
 
 ## 2. Regras de reprodução (não mudar sem pedido)
 
-1. 4 colunas fixas; 4 a 32 botões. Coluna = índice % 4.
+1. 4 colunas fixas; 4 a 32 botões (de 4 em 4), mais 48 e 64. Coluna = índice % 4.
 2. Uma mídia por coluna; a nova corta a anterior (com fade, se ligado). Colunas diferentes tocam juntas.
 3. Tocar de novo o botão que toca: para / recomeça / ignora (Ajuste geral; padrão: para).
 4. Telão: uma imagem ou vídeo por vez, de qualquer coluna. Texto é camada por cima; texto novo substitui texto.
@@ -47,7 +47,7 @@ Uma tecla = uma ação. Atalho geral vence atalho de mídia. Restaurar padrões 
 
 ## 5. Integração com o PocketStage
 
-- show.json: `{format:"pocketstage.show", version:1, id, name, date?, start?, eventType?, lineup[], media:{count, cells[32]}, updatedAt}`. lineup e campos desconhecidos passam sem mudança. Formato antigo convertido sozinho.
+- show.json: `{format:"pocketstage.show", version:1, id, name, date?, start?, eventType?, lineup[], media:{count, cells[32] (até 64 quando o show passa de 32 botões)}, updatedAt}`. lineup e campos desconhecidos passam sem mudança. Formato antigo convertido sozinho.
 - .psshow = ZIP (show.json, log.json, media/<cueId>.<ext>). Importar cria show novo; versão > 1 recusada com "Este show foi criado numa versão mais nova do PocketStage. Atualize o app."
 - Comandos: go, stop, play_row, stop_all, blackout, pause, resume, lock, unlock, release_locks, load_show, set_settings.
 - Log: `{t, source:"midia", type, ref, linkId, text}`; tipos cue_go, cue_stop, cue_end, stop_all, blackout, pause, resume, lock, unlock.
@@ -75,6 +75,6 @@ Feito: protótipo web completo; código Kotlin de referência (nunca compilado).
 (4a+) Android: som e vídeo por ExoPlayer nativo (Som.kt, canal psm/player; vídeo em textura SurfaceProducer no motor do telão ou da mesa); saída de som escolhida pelo operador (padrão: alto-falante do telefone; audioDeviceType 0 = telefone), selo 🔊 na barra, aviso ao conectar saída nova ✔.
 (4b) Computador: telão em janela própria (desktop_multi_window 0.3.1 + window_manager fork boyan01 ref 6fae92d) em tela cheia no 2º monitor; botão no painel "Abrir telão no 2º monitor" ✔ (falta testar).
 (4b+) Salvamento automático (editor do show, mídia ao sair, Ajustes na hora); computador pergunta antes de fechar; "Exportar show" (estrutura, sem mídias) e "Exportar show completo" (avisa o tamanho); botão "ARQUIVO FALTANDO"; Show com local e showType; exemplo sem nomes fictícios (Comediante 01…); diagnóstico no computador em Documentos/PocketStage-Midia-mesa.txt e -telao.txt. Mesa travada no Windows com o telão aberto: resolvido. Causa: o media_kit_video guarda uma instância global e intercepta a janela; com a 2ª janela, a mesa mandava mouse/teclado/fechar para a janela do telão. Correção no setup_platforms.sh (cada janela acha o próprio plugin por SetPropW 'psm_mkv'); o CI do Windows clica na mesa com o telão aberto e testa o fechar. Aviso "Abrindo telão… aguarde" no painel e no selo.
-(5) Cronômetro solto abaixo do telão: modelo `run` do PocketStage no núcleo (cronometro.dart: Run, Cronometro, testes), guardado em show.json e exportado; mesa só com Play, Pause, Stop e Regressiva/Progressiva; textos de log do PS (type 'timer'). (6) Registro do show (Menu › Registro do show): lista, exportar .txt, limpar. (7) Exemplo v2: sinais 1-3 e entradas Rock/Pop/HipHop em MP3 enviados pelo Mello; cartaz "Comédia Stand Up"; instalações antigas ganham o exemplo novo na lista uma vez. Web saiu da fila (só app e computador); o protótipo web só recebeu os mesmos exemplos. Pendente: onde usar 5_Minutinhos_Funk_15s.mp3.
+(5) Cronômetro solto abaixo do telão: modelo `run` do PocketStage no núcleo (cronometro.dart: Run, Cronometro, testes), guardado em show.json e exportado; na mesa (pedido do Mello): cronômetro simples, sem fila, só progressivo, com Play, Pause e Stop (Stop zera), box pequeno; usa running/runStart/acc do run (CronometroSolto); log 'Cronômetro · Play/Pause/Stop'. O modelo completo com fila fica no núcleo para as próximas fases. Linhas numeradas nos ▶; teclas 1–9 e 0 tocam as linhas 1–10 (atalho de mídia com a mesma tecla vence); o exemplo não tem mais atalhos 1, 2, 3 nos sinais (migração automática). (6) Registro do show (Menu › Registro do show): lista, exportar .txt, limpar. (7) Exemplo v2: sinais 1-3 e entradas Rock/Pop/HipHop em MP3 enviados pelo Mello; cartaz "Comédia Stand Up"; instalações antigas ganham o exemplo novo na lista uma vez. Web saiu da fila (só app e computador); o protótipo web só recebeu os mesmos exemplos.
 Próxima fase, nesta ordem: cronômetro de palco (modelo `run` do PocketStage, plano aguardando ok); (4c) tela externa no iPhone/iPad; (5) teste em palco em vários aparelhos (mín. um Android, um iPhone ou iPad e um computador, com tabela de aparelhos testados); (6) decisões pendentes; (7) funções de operador: verificar show, mover/copiar mídia, duplicar show, desfazer, tela de log; (8) Fase 3 com o PocketStage.
 Riscos: telão nativo em cada sistema; pan/ganho no media_kit; iOS exige Mac e conta Apple Developer; arquivos no iOS precisam ser copiados.
