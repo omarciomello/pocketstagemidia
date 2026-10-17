@@ -1,0 +1,11 @@
+02:29:55.729 === início 2026-10-17 02:29:55.595546 · "Windows Server 2025 Datacenter" 10.0 (Build 26100)
+02:29:55.843 recebeu visual
+02:29:55.843 recebeu text
+02:29:57.731 vivo · quadros=6
+02:29:59.731 vivo · quadros=6
+02:30:01.731 vivo · quadros=6
+02:30:03.731 vivo · quadros=6
+02:30:05.731 vivo · quadros=6
+02:30:07.731 vivo · quadros=6
+02:30:09.732 vivo · quadros=6
+02:30:09.789 recebeu fechar

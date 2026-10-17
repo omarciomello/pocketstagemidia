@@ -1,0 +1,29 @@
+02:29:47.787 === início 2026-10-17 02:29:47.787727 · "Windows Server 2025 Datacenter" 10.0 (Build 26100)
+02:29:49.712 clique 137,139 · view=0
+02:29:49.724 cue_go · Trilha · 1º sinal
+02:29:49.761 cue_end · Terminou · Trilha · 1º sinal
+02:29:49.789 vivo · quadros=17
+02:29:51.789 vivo · quadros=37
+02:29:53.789 abrindo janela do telão
+02:29:53.789 vivo · quadros=39
+02:29:55.791 vivo · quadros=61
+02:29:55.842 telão conectado: 1024×768 · janela
+02:29:56.707 clique 137,139 · view=0
+02:29:56.725 cue_go · Trilha · 1º sinal
+02:29:56.765 cue_end · Terminou · Trilha · 1º sinal
+02:29:57.789 vivo · quadros=68
+02:29:59.789 vivo · quadros=70
+02:30:00.703 clique 137,234 · view=0
+02:30:00.715 cue_go · Trilha · 2º sinal
+02:30:00.756 cue_end · Terminou · Trilha · 2º sinal
+02:30:01.788 vivo · quadros=74
+02:30:03.790 vivo · quadros=76
+02:30:04.705 clique 927,25 · view=0
+02:30:04.772 stop_all · Parar tudo
+02:30:05.789 vivo · quadros=91
+02:30:07.790 vivo · quadros=104
+02:30:09.727 clique 657,386 · view=0
+02:30:09.788 fechando o app
+02:30:09.788 pedindo para fechar o telão
+02:30:09.789 telão desconectado
+02:30:09.790 vivo · quadros=117

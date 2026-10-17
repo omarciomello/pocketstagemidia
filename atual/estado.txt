@@ -1,0 +1,18 @@
+﻿3s janelas: [pocketstage_midia 1044x720] 
+4s clique
+4s janelas: [pocketstage_midia 1044x720] 
+8s janelas: [pocketstage_midia 1044x720] 
+9s janelas: [pocketstage_midia 1044x720] 
+11s clique
+11s janelas: [pocketstage_midia 1044x720] [ 400x260] 
+12s janelas: [pocketstage_midia 1044x720] [ 400x260] 
+15s clique
+15s janelas: [pocketstage_midia 1044x720] [ 400x260] 
+19s clique
+19s janelas: [pocketstage_midia 1044x720] [ 400x260] 
+21s WM_CLOSE
+21s janelas: [pocketstage_midia 1044x720] [ 400x260] 
+24s clique Fechar
+24s janelas: [pocketstage_midia 1044x720] 
+27s processo vivo: False
+27s janelas: 
