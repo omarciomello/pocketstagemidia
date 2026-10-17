@@ -4,6 +4,34 @@ import 'package:pocketstage_midia_core/pocketstage_midia_core.dart';
 import 'package:test/test.dart';
 
 void main() {
+  group('Mover e copiar mídia', () {
+    const a = Cue(id: 'a', uri: '/m/a.mp3', name: 'A', kind: MediaKind.audio, hotkey: 'Q', volume: 0.5, loop: true);
+    const b = Cue(id: 'b', uri: '/m/b.png', name: 'B', kind: MediaKind.image);
+    final s = Show(id: 's', name: 'S', count: 8, cells: const [a, b]);
+
+    test('mover para vazio e trocar com ocupado', () {
+      final m = s.moverCelula(0, 5);
+      expect(m.cells[0], isNull);
+      expect(m.cells[5]?.id, 'a');
+      final t = s.moverCelula(0, 1);
+      expect(t.cells[0]?.id, 'b');
+      expect(t.cells[1]?.id, 'a');
+      expect(identical(s.moverCelula(2, 2), s), true);
+    });
+
+    test('copiar mantém os ajustes, troca o id e tira a tecla', () {
+      final c = s.copiarCelula(0, 6, novoId: 'a2');
+      expect(c.cells[0]?.id, 'a');
+      final copia = c.cells[6]!;
+      expect(copia.id, 'a2');
+      expect(copia.hotkey, '');
+      expect(copia.uri, '/m/a.mp3');
+      expect(copia.volume, 0.5);
+      expect(copia.loop, true);
+      expect(s.copiarCelula(3, 6), same(s));
+    });
+  });
+
   group('Show com 48 e 64 botões', () {
     test('até 32 o JSON tem 32 posições; com 64, todas vão e voltam', () {
       final cue = Cue(id: 'z', uri: '/m/z.mp3', name: 'Z', kind: MediaKind.audio);

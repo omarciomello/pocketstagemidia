@@ -58,6 +58,12 @@ class _EditorScreenState extends State<EditorScreen> {
   Timer? _timer;
   bool get _novo => widget.show == null;
 
+  /// Mídia copiada ou recortada, à espera de "Colar".
+  Cue? _area;
+
+  /// Botão de onde a mídia foi recortada (colar move em vez de copiar).
+  int? _recorteDe;
+
   @override
   void dispose() {
     if (_timer?.isActive ?? false) _salvarAgora();
@@ -102,14 +108,103 @@ class _EditorScreenState extends State<EditorScreen> {
     }
   }
 
+  /// Arrastar: move; se o destino estiver ocupado, os dois trocam de lugar.
+  void _mover(int de, int para) {
+    final ocupado = _draft.cells[para] != null;
+    _set(_draft.moverCelula(de, para));
+    aviso(context, ocupado ? 'Mídias trocadas de lugar.' : 'Mídia movida.');
+  }
+
+  void _copiar(int i, {bool recortar = false}) {
+    final c = _draft.cells[i];
+    if (c == null) return;
+    setState(() {
+      _area = c;
+      _recorteDe = recortar ? i : null;
+    });
+  }
+
+  Future<void> _colar(int para) async {
+    final area = _area;
+    if (area == null) return;
+    if (_recorteDe != null) {
+      // recortar + colar = mover (a mídia mantém o id e as ligações)
+      final de = _draft.cells.indexWhere((x) => x?.id == area.id);
+      if (de >= 0) _set(_draft.moverCelula(de, para));
+      setState(() {
+        _area = null;
+        _recorteDe = null;
+      });
+      return;
+    }
+    final atual = _draft.cells[para];
+    if (atual != null &&
+        !await confirmar(context, 'Substituir “${atual.name}”?', 'A cópia de “${area.name}” entra no lugar.', ok: 'Substituir')) {
+      return;
+    }
+    _set(_draft.colarCue(area, para));
+  }
+
+  Future<void> _menuCelula(int i) async {
+    final c = _draft.cells[i];
+    if (c == null) return;
+    final escolha = await showModalBottomSheet<String>(
+      context: context,
+      showDragHandle: true,
+      builder: (ctx) => SafeArea(
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          ListTile(leading: const Icon(Icons.tune), title: const Text('Ajustes da mídia'), onTap: () => Navigator.pop(ctx, 'editar')),
+          ListTile(
+            leading: const Icon(Icons.copy),
+            title: const Text('Copiar'),
+            subtitle: const Text('Depois toque em outro botão e escolha Colar', style: TextStyle(color: Cores.textoFraco, fontSize: 12)),
+            onTap: () => Navigator.pop(ctx, 'copiar'),
+          ),
+          ListTile(
+            leading: const Icon(Icons.content_cut),
+            title: const Text('Recortar (mover)'),
+            subtitle: const Text('Ou segure e arraste o botão', style: TextStyle(color: Cores.textoFraco, fontSize: 12)),
+            onTap: () => Navigator.pop(ctx, 'recortar'),
+          ),
+          if (_area != null && _area!.id != c.id)
+            ListTile(
+              leading: const Icon(Icons.content_paste),
+              title: Text('Colar “${_area!.name}” aqui'),
+              onTap: () => Navigator.pop(ctx, 'colar'),
+            ),
+        ]),
+      ),
+    );
+    if (!mounted) return;
+    switch (escolha) {
+      case 'editar':
+        await _editar(i, c, novo: false);
+      case 'copiar':
+        _copiar(i);
+      case 'recortar':
+        _copiar(i, recortar: true);
+      case 'colar':
+        await _colar(i);
+    }
+  }
+
   Future<void> _tocarCelula(int i) async {
     final atual = _draft.cells[i];
-    if (atual != null) return _editar(i, atual, novo: false);
+    if (atual != null) return _menuCelula(i);
+    final area = _area;
     final escolha = await showModalBottomSheet<String>(
       context: context,
       showDragHandle: true,
       builder: (c) => SafeArea(
         child: Column(mainAxisSize: MainAxisSize.min, children: [
+          if (area != null)
+            ListTile(
+              leading: const Icon(Icons.content_paste, color: Cores.ciano),
+              title: Text('Colar “${area.name}”'),
+              subtitle: Text(_recorteDe != null ? 'MOVE PARA ESTE BOTÃO' : 'CÓPIA COM OS MESMOS AJUSTES',
+                  style: const TextStyle(color: Cores.textoFraco, fontSize: 11, letterSpacing: 1)),
+              onTap: () => Navigator.pop(c, 'colar'),
+            ),
           ListTile(
             leading: const Icon(Icons.audio_file_outlined),
             title: const Text('Arquivo do aparelho…'),
@@ -126,6 +221,7 @@ class _EditorScreenState extends State<EditorScreen> {
       ),
     );
     if (!mounted || escolha == null) return;
+    if (escolha == 'colar') return _colar(i);
     if (escolha == 'texto') {
       final s = widget.app.settings;
       return _editar(
@@ -209,6 +305,30 @@ class _EditorScreenState extends State<EditorScreen> {
             onChanged: _quantidade,
           ),
           const SizedBox(height: 16),
+          if (_area != null)
+            Container(
+              margin: const EdgeInsets.only(bottom: 10),
+              padding: const EdgeInsets.fromLTRB(12, 6, 6, 6),
+              decoration: BoxDecoration(
+                color: Cores.cianoFundo,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Cores.ciano),
+              ),
+              child: Row(children: [
+                const Icon(Icons.content_paste, size: 18, color: Cores.ciano),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    '${_recorteDe != null ? 'Recortada' : 'Copiada'}: “${_area!.name}”. Toque no botão de destino e escolha Colar.',
+                    style: const TextStyle(color: Cores.ciano, fontWeight: FontWeight.w600),
+                  ),
+                ),
+                Btn('Cancelar', compacto: true, onTap: () => setState(() {
+                      _area = null;
+                      _recorteDe = null;
+                    })),
+              ]),
+            ),
           for (var r = 0; r < d.rows; r++)
             Padding(
               padding: const EdgeInsets.only(bottom: 10),
@@ -224,7 +344,8 @@ class _EditorScreenState extends State<EditorScreen> {
             ),
           const SizedBox(height: 6),
           const Text(
-            'Toque num botão vazio para escolher áudio, vídeo, imagem ou texto. Cada coluna toca uma mídia por vez; '
+            'Toque num botão vazio para escolher áudio, vídeo, imagem ou texto. Toque num botão preenchido para ajustar, '
+            'copiar ou recortar; segure e arraste para mover (num botão ocupado, os dois trocam). Cada coluna toca uma mídia por vez; '
             'colunas diferentes tocam juntas. No show, o botão de tocar a linha, à esquerda, para o resto e toca a linha inteira.',
             style: TextStyle(color: Cores.textoFraco, fontSize: 13, height: 1.45),
           ),
@@ -234,7 +355,44 @@ class _EditorScreenState extends State<EditorScreen> {
   }
 
   Widget _celula(int i) {
+    return DragTarget<int>(
+      onWillAcceptWithDetails: (d) => d.data != i,
+      onAcceptWithDetails: (d) => _mover(d.data, i),
+      builder: (context, candidatos, _) {
+        final alvo = candidatos.isNotEmpty;
+        final c = _draft.cells[i];
+        Widget w = _celulaVisual(i);
+        if (c != null) {
+          w = LayoutBuilder(
+            builder: (context, box) => LongPressDraggable<int>(
+              data: i,
+              feedback: Material(
+                color: Colors.transparent,
+                child: Opacity(
+                  opacity: .85,
+                  child: SizedBox(width: box.maxWidth, height: box.maxHeight, child: _celulaVisual(i)),
+                ),
+              ),
+              childWhenDragging: Opacity(opacity: .35, child: w),
+              child: w,
+            ),
+          );
+        }
+        return DecoratedBox(
+          position: DecorationPosition.foreground,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: alvo ? Border.all(color: Cores.ciano, width: 2) : null,
+          ),
+          child: w,
+        );
+      },
+    );
+  }
+
+  Widget _celulaVisual(int i) {
     final c = _draft.cells[i];
+    final recortada = _recorteDe != null && _area != null && c?.id == _area!.id;
     if (c == null) {
       return InkWell(
         borderRadius: BorderRadius.circular(12),
@@ -264,6 +422,8 @@ class _EditorScreenState extends State<EditorScreen> {
         ),
         child: Stack(children: [
           if (cor != null) Positioned(left: 0, right: 0, top: 0, height: 4, child: ColoredBox(color: cor)),
+          if (recortada)
+            const Positioned(right: 6, top: 6, child: Icon(Icons.content_cut, size: 14, color: Cores.ciano)),
           Padding(
             padding: const EdgeInsets.all(9),
             child: ClipRect(

@@ -150,6 +150,11 @@ class _ShowScreenState extends State<ShowScreen> {
               item('Shows salvos', Icons.list_alt, () => _abrir(ShowsScreen(app: app))),
               if (s != null) item('Editar este show', Icons.edit_outlined, () => _abrir(EditorScreen(app: app, show: s))),
               if (s != null) item('Registro do show', Icons.receipt_long_outlined, () => _abrir(LogScreen(app: app, show: s))),
+              if (s != null)
+                item('Duplicar este show', Icons.copy_all_outlined, () async {
+                  final c = await app.duplicateShow(s);
+                  if (mounted) aviso(context, '“${c.name}” criado em Shows salvos.');
+                }),
               if (s != null) item('Exportar show', Icons.ios_share, () => exportarShow(context, app, s)),
               if (s != null)
                 item('Exportar show completo', Icons.inventory_2_outlined, () => exportarShow(context, app, s, completo: true)),

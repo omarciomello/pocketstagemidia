@@ -679,6 +679,33 @@ class Show {
         extra: extra,
       );
 
+  /// Move a mídia do botão [de] para o botão [para]; se [para] estiver ocupado, os dois trocam de lugar.
+  /// A mídia mantém o id, então ligações (imagem ligada, seguir) continuam valendo.
+  Show moverCelula(int de, int para) {
+    if (de == para || de < 0 || para < 0 || de >= maxCells || para >= maxCells) return this;
+    final c = List<Cue?>.of(cells);
+    final t = c[para];
+    c[para] = c[de];
+    c[de] = t;
+    return copyWith(cells: c);
+  }
+
+  /// Copia a mídia do botão [de] para o botão [para] com todos os ajustes, id novo e sem tecla de atalho
+  /// (uma tecla só faz uma ação). Substitui o que estiver em [para].
+  Show copiarCelula(int de, int para, {String? novoId}) {
+    final orig = (de >= 0 && de < maxCells) ? cells[de] : null;
+    if (orig == null || para < 0 || para >= maxCells || de == para) return this;
+    return colarCue(orig, para, novoId: novoId);
+  }
+
+  /// Cola uma cópia de [cue] no botão [para] (id novo, sem tecla de atalho).
+  Show colarCue(Cue cue, int para, {String? novoId}) {
+    if (para < 0 || para >= maxCells) return this;
+    final c = List<Cue?>.of(cells);
+    c[para] = cue.copyWith(id: novoId ?? newId(), hotkey: '');
+    return copyWith(cells: c);
+  }
+
   /// Até 32 botões o JSON tem 32 posições, como no PocketStage; acima disso, até o último botão preenchido.
   int _celulasNoJson() {
     var n = 32;

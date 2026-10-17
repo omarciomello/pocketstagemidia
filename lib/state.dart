@@ -202,6 +202,54 @@ class AppState extends ChangeNotifier {
     }
   }
 
+  /// Duplica um show para criar variações da mesma noite: mesmas mídias e ajustes, fila e dados do show;
+  /// cronômetro e registro começam do zero. No celular, as mídias copiadas para o app são copiadas de novo.
+  Future<Show> duplicateShow(Show s) async {
+    final novoId = newId();
+    final cells = List<Cue?>.of(s.cells);
+    final copias = <(String, String)>[];
+    if (copiesMedia) {
+      for (var i = 0; i < cells.length; i++) {
+        final c = cells[i];
+        if (c == null || c.uri.isEmpty || !File(c.uri).existsSync()) continue;
+        final destino = store.mediaTarget(novoId, c.id, c.uri);
+        copias.add((c.uri, destino));
+        cells[i] = c.copyWith(uri: destino);
+      }
+      if (copias.isNotEmpty) {
+        await Isolate.run(() {
+          for (final (de, para) in copias) {
+            File(de).copySync(para);
+          }
+        });
+      }
+    }
+    final nomes = shows.map((x) => x.name).toSet();
+    var nome = '${s.name} (cópia)';
+    for (var n = 2; nomes.contains(nome); n++) {
+      nome = '${s.name} (cópia $n)';
+    }
+    final copia = Show(
+      id: novoId,
+      name: nome,
+      count: s.count,
+      cells: cells,
+      date: s.date,
+      start: s.start,
+      eventType: s.eventType,
+      local: s.local,
+      showType: s.showType,
+      lineup: [for (final l in s.lineup) LineupItem(deepCopyJson(l.raw) as Map<String, dynamic>)],
+      updatedAt: DateTime.now().millisecondsSinceEpoch,
+      extra: s.extra,
+    );
+    store.saveShow(copia);
+    final i = shows.indexWhere((x) => x.id == s.id);
+    shows.insert(i < 0 ? 0 : i + 1, copia);
+    notifyListeners();
+    return copia;
+  }
+
   void deleteShow(String id) {
     if (engine.show?.id == id) closeShow();
     store.deleteShow(id);

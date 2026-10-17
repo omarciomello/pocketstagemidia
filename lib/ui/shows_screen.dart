@@ -21,6 +21,16 @@ class ShowsScreen extends StatelessWidget {
   void _editar(BuildContext context, Show? s) =>
       Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => EditorScreen(app: app, show: s)));
 
+  Future<void> _duplicar(BuildContext context, Show s) async {
+    aviso(context, 'Duplicando…');
+    try {
+      final c = await app.duplicateShow(s);
+      if (context.mounted) aviso(context, '“${c.name}” criado. Está logo abaixo do original.');
+    } catch (e) {
+      if (context.mounted) aviso(context, 'Não consegui duplicar: $e');
+    }
+  }
+
   Future<void> _excluir(BuildContext context, Show s) async {
     final ok = await confirmar(
       context,
@@ -98,6 +108,8 @@ class ShowsScreen extends StatelessWidget {
                                   _abrir(context, s);
                                 case 'editar':
                                   _editar(context, s);
+                                case 'duplicar':
+                                  _duplicar(context, s);
                                 case 'exportar':
                                   exportarShow(context, app, s);
                                 case 'completo':
@@ -109,6 +121,7 @@ class ShowsScreen extends StatelessWidget {
                             itemBuilder: (_) => const [
                               PopupMenuItem(value: 'abrir', child: Text('Abrir')),
                               PopupMenuItem(value: 'editar', child: Text('Editar')),
+                              PopupMenuItem(value: 'duplicar', child: Text('Duplicar')),
                               PopupMenuItem(value: 'exportar', child: Text('Exportar show')),
                               PopupMenuItem(value: 'completo', child: Text('Exportar show completo')),
                               PopupMenuItem(value: 'excluir', child: Text('Excluir', style: TextStyle(color: Cores.vermelho))),

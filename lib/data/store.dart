@@ -59,13 +59,18 @@ class Store {
 
   /// Copia um arquivo escolhido para a pasta do show. Retorna o caminho novo.
   String copyMedia(String showId, String cueId, String src) {
+    final target = mediaTarget(showId, cueId, src);
+    File(src).copySync(target);
+    return target;
+  }
+
+  /// Caminho onde a cópia de [src] vai morar na pasta do show (cria a pasta, não copia).
+  String mediaTarget(String showId, String cueId, String src) {
     final dir = mediaDir(showId)..createSync(recursive: true);
     final name = src.split(RegExp(r'[/\\]')).last;
     final dot = name.lastIndexOf('.');
     final ext = dot > 0 ? name.substring(dot + 1).toLowerCase() : 'bin';
-    final target = _p([dir.path, '${PsShow.safe(cueId)}-${DateTime.now().millisecondsSinceEpoch}.$ext']);
-    File(src).copySync(target);
-    return target;
+    return _p([dir.path, '${PsShow.safe(cueId)}-${DateTime.now().millisecondsSinceEpoch}.$ext']);
   }
 
   /// Apaga da pasta do show os arquivos que nenhuma mídia usa mais.
