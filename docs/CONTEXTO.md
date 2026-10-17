@@ -83,13 +83,14 @@ Feito e testado pelo Mello no celular e no PC:
 - Registro do show (Menu): lista, exportar .txt, limpar.
 - 48 e 64 botões; ▶ numerados; teclas 1–9/0 tocam linhas.
 - Exemplo v3: sinais e entradas Rock/Pop/HipHop (MP3 do Mello), cartaz "Comédia Stand Up"; migração tira atalhos 1–3 dos sinais em exemplos antigos.
-Próximos passos (ordem a partir do 2 é proposta; o Mello decide):
-1. Assinatura fixa do APK: Mello cria os segredos PSM_KEYSTORE_B64 e PSM_KEY_PASSWORD (assinatura-psm.zip entregue; keystore nunca no repositório).
-2. Teste em palco: um Android e um computador com telão e mesa de som; tabela de aparelhos testados.
-3. Decisões pendentes (tabela na especificação).
-4. Funções de operador: verificar show, mover/copiar mídia, duplicar show, desfazer.
-5. Abrir .psshow pelo arquivo e deep link.
-6. Cronômetro com fila (regressiva, fases, textos do PS) usando o `run` existente.
-7. iPhone e iPad (telão externo).
-8. Fase 3 com o PocketStage (cronômetro linkado).
+- Editor: segurar e arrastar move a mídia (ocupado = troca); menu do botão com Copiar e Recortar; Colar = cópia com mesmos ajustes, id novo, sem atalho (Show.moverCelula/copiarCelula/colarCue no núcleo). Duplicar show (lista e menu da mesa): "Nome (cópia)", mesmas mídias (no celular copiadas de novo), fila; run e log zerados.
+- Teste em palco aprovado pelo Mello no telefone e no computador (2026-10-16).
+Decisões respondidas (2026-10-16), comportamento atual mantido: editar o show em uso não para nada (salvamento automático); deixas travadas destravam ao reabrir; Ajustes e atalhos gerais não viajam no .psshow (são do aparelho); aviso de fim só visual; celular/tablet copiam a mídia, computador usa o original; o app lembra se o painel do telão estava aberto.
+Próximos passos (a partir do 2 é proposta; o Mello decide):
+1. Assinatura fixa do APK: Mello cria os segredos PSM_KEYSTORE_B64 e PSM_KEY_PASSWORD (em andamento).
+2. Abrir .psshow pelo arquivo e deep link.
+3. Cronômetro com fila (regressiva, fases, textos do PS) usando o `run` existente.
+4. Verificar show e desfazer (em aberto; o Mello não pediu ainda).
+5. iPhone e iPad (telão externo).
+6. Fase 3 com o PocketStage (cronômetro linkado).
 Riscos: ajuste do media_kit_video ao atualizar o media_kit; pan/ganho > 0 dB a validar; iOS exige Mac e conta Apple Developer.
