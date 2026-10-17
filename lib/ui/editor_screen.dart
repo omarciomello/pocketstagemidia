@@ -361,7 +361,8 @@ class _EditorScreenState extends State<EditorScreen> {
       builder: (context, candidatos, _) {
         final alvo = candidatos.isNotEmpty;
         final c = _draft.cells[i];
-        Widget w = _celulaVisual(i);
+        final visual = _celulaVisual(i);
+        Widget w = visual;
         if (c != null) {
           w = LayoutBuilder(
             builder: (context, box) => LongPressDraggable<int>(
@@ -373,8 +374,8 @@ class _EditorScreenState extends State<EditorScreen> {
                   child: SizedBox(width: box.maxWidth, height: box.maxHeight, child: _celulaVisual(i)),
                 ),
               ),
-              childWhenDragging: Opacity(opacity: .35, child: w),
-              child: w,
+              childWhenDragging: Opacity(opacity: .35, child: visual),
+              child: visual,
             ),
           );
         }
