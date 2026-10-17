@@ -22,7 +22,7 @@ jobs:
           cache: true
       - run: flutter pub get
       - name: Capturas das telas
-        run: CAPTURAS=1 bash tool/ci_run.sh "capturas" flutter test test/capturas_test.dart --update-goldens --timeout 90s
+        run: CAPTURAS=1 bash tool/ci_run.sh "capturas" timeout 420 flutter test test/capturas_test.dart --update-goldens --timeout 90s --reporter expanded
       - name: Publicar no ramo ci-capturas
         run: |
           cd test/goldens
