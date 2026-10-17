@@ -2,7 +2,7 @@
 
 Cole este arquivo no início de uma conversa nova (ou nas instruções de um Projeto) para retomar o trabalho.
 A especificação completa está no documento "PocketStage Mídia — Especificação" (Claude Docs). Em caso de conflito, a especificação vale.
-Atualizado em 2026-10-15 (Flutter, multiplataforma).
+Atualizado em 2026-10-16 (fase de base concluída: Android e computador).
 
 <instrucoes_de_trabalho>
 - Dono do projeto: Mello. Ator, comediante, produtor de eventos e técnico de áudio. Opera o app em cena, no escuro.
@@ -15,8 +15,8 @@ Atualizado em 2026-10-15 (Flutter, multiplataforma).
 
 ## 1. O que é
 
-App **multiplataforma** (Android, iPhone, iPad, Windows, macOS) que vira mesa de trilhas, vídeos, imagens e textos para teatro e stand-up. O aparelho é a mesa; o telão recebe só o palco, por HDMI ou como segundo monitor.
-**Decisão (2026-10-15): o app é feito em Flutter.** O código Android em Kotlin e o protótipo web são só referência de comportamento; o Kotlin não será mais compilado.
+App para **Android e computador (Windows e macOS)** que vira mesa de trilhas, vídeos, imagens e textos para teatro e stand-up. O aparelho é a mesa; o telão recebe só o palco, por HDMI ou como segundo monitor.
+**Decisões:** o app é feito em Flutter (2026-10-15); a web saiu da fila e o foco é app e computador; iPhone e iPad ficam para depois (2026-10-16). O código Kotlin e o protótipo web são só referência de comportamento.
 Obrigatório em todas as plataformas: a tela nunca apaga nem bloqueia com o app aberto (sem opção de desligar) e o som continua em segundo plano (app minimizado, outro app por cima, tela do sistema bloqueada).
 Limites: no iPhone/iPad o app não escolhe a saída de áudio (abre o seletor do iOS) e copia a mídia para dentro do app; no computador o telão é uma janela em tela cheia no segundo monitor.
 É o futuro módulo premium "Tela de Cabine Técnica" do **PocketStage** (stage manager de bolso do Mello, Flutter + Firebase, ainda só protótipo web), na Fase 3 dele. Até lá, apps separados que trocam shows no mesmo formato.
@@ -30,7 +30,7 @@ Limites: no iPhone/iPad o app não escolhe a saída de áudio (abre o seletor do
 5. Fim natural libera a coluna e apaga o telão, exceto vídeo "fixo no último quadro".
 6. Imagem fica até ser tocada de novo, substituída, apagada ou sair pelo tempo de tela.
 7. Trilha com imagem ligada: a imagem entra junto; ao acabar a trilha fica (padrão) ou sai, escolhido num pop-up ao ligar.
-8. ▶ da linha: para tudo e toca a linha. Tocar de novo para tudo. GO = próxima linha; também linha anterior.
+8. ▶ da linha: para tudo e toca a linha. Tocar de novo para tudo. GO = próxima linha; também linha anterior. Cada ▶ mostra o número da linha; teclas 1–9 tocam as linhas 1–9 e 0 toca a linha 10.
 9. Pausar congela tudo (incl. pré-esperas e tempos). Parar tudo usa o fade do Parar tudo. Bloquear desativa a grade; desbloquear = segurar.
 10. Painel do telão: o título "Telão" é o botão Mostrar/Ocultar telão. Ocultar recolhe o painel para a direita (grade ocupa tudo); mostrar expande. O botão nunca muda de lugar. Aberto, o painel fica fixo ao rolar a grade.
 
@@ -43,14 +43,16 @@ Avançado: startSec, endSec, fadeInSec, fadeOutSec, fadeCurve (null = padrão), 
 ## 4. Ajustes gerais (JSON nas preferências; mesmos nomes no web)
 
 fadeIn 2, fadeOut 3, fadeCurve linear, stopAllFade 0.35, masterDb 0, retrigger parar, pausePreWait true (Pausar congela as pré-esperas; desligado, cancela), audioDeviceType 0 (Android), transition fade, visFade 1, textPos embaixo, textSize M, btnSize M, clockMode restante, endWarnSec 5, showRowGo true, confirmStopAll false, holdSec 1.2, lockOnOpen false, confirmExit true, tipAirplane true (tela sempre ligada é obrigatória, sem ajuste), keys {go: PageDown, prev: PageUp, stopAll, pause, blackout}.
-Uma tecla = uma ação. Atalho geral vence atalho de mídia. Restaurar padrões disponível.
+Uma tecla = uma ação. Atalho geral vence atalho de mídia, que vence atalho de linha (1–9, 0). Restaurar padrões disponível.
 
 ## 5. Integração com o PocketStage
 
 - show.json: `{format:"pocketstage.show", version:1, id, name, date?, start?, eventType?, lineup[], media:{count, cells[32] (até 64 quando o show passa de 32 botões)}, updatedAt}`. lineup e campos desconhecidos passam sem mudança. Formato antigo convertido sozinho.
 - .psshow = ZIP (show.json, log.json, media/<cueId>.<ext>). Importar cria show novo; versão > 1 recusada com "Este show foi criado numa versão mais nova do PocketStage. Atualize o app."
 - Comandos: go, stop, play_row, stop_all, blackout, pause, resume, lock, unlock, release_locks, load_show, set_settings.
-- Log: `{t, source:"midia", type, ref, linkId, text}`; tipos cue_go, cue_stop, cue_end, stop_all, blackout, pause, resume, lock, unlock.
+- show.json também guarda local, showType e `run` (cronômetro no modelo do PocketStage; hoje a mesa usa só running/runStart/acc, contagem progressiva).
+- Exportar show = só a estrutura ("(estrutura)" no nome); Exportar show completo = com mídias, avisa o tamanho.
+- Log: `{t, source:"midia", type, ref, linkId, text}`; tipos cue_go, cue_stop, cue_end, stop_all, blackout, pause, resume, lock, unlock, timer ("Cronômetro · Play/Pause (MM:SS)/Stop (MM:SS)").
 - Deep link: pocketstage-midia://show/{id} e .../go/{cueId} (só desbloqueado).
 
 ## 6. Técnica
@@ -71,10 +73,23 @@ Tema escuro único. Fundo #090A0F; painéis #12141C/#1E212D/#272B38; texto #E2E4
 
 ## 8. Estado e próxima fase
 
-Feito: protótipo web completo; código Kotlin de referência (nunca compilado). Flutter: (1) repositório e build no GitHub Actions com Android, Windows, macOS e iOS sem assinatura ✔; (2) núcleo em Dart com testes das regras ✔; (3) telas em Flutter: mesa com painel do telão ocultável e fixo, lista de shows, editor do show e da mídia, Ajustes, exportar/importar e show de exemplo, com som e vídeo pelo media_kit e tela sempre ligada ✔ (testado pelo Mello no celular e no PC: ok); (4a) Android: telão HDMI nativo (MainActivity/Telao.kt: Presentation com 2º motor Flutter `telaoMain`, canal psm/telao; vídeo toca no telão via RemotePlayer), serviço em primeiro plano (ServicoPalco) e som em segundo plano (audio_session; UIBackgroundModes audio no iOS); assinatura fixa por segredos PSM_KEYSTORE_B64/PSM_KEY_PASSWORD; downloads em Releases › teste ✔. HDMI testado pelo Mello: ok (espelhamento e DeX; no DeX o telão é TelaoActivity numa janela). Diagnóstico em Menu › Telão: diagnóstico.
-(4a+) Android: som e vídeo por ExoPlayer nativo (Som.kt, canal psm/player; vídeo em textura SurfaceProducer no motor do telão ou da mesa); saída de som escolhida pelo operador (padrão: alto-falante do telefone; audioDeviceType 0 = telefone), selo 🔊 na barra, aviso ao conectar saída nova ✔.
-(4b) Computador: telão em janela própria (desktop_multi_window 0.3.1 + window_manager fork boyan01 ref 6fae92d) em tela cheia no 2º monitor; botão no painel "Abrir telão no 2º monitor" ✔ (falta testar).
-(4b+) Salvamento automático (editor do show, mídia ao sair, Ajustes na hora); computador pergunta antes de fechar; "Exportar show" (estrutura, sem mídias) e "Exportar show completo" (avisa o tamanho); botão "ARQUIVO FALTANDO"; Show com local e showType; exemplo sem nomes fictícios (Comediante 01…); diagnóstico no computador em Documentos/PocketStage-Midia-mesa.txt e -telao.txt. Mesa travada no Windows com o telão aberto: resolvido. Causa: o media_kit_video guarda uma instância global e intercepta a janela; com a 2ª janela, a mesa mandava mouse/teclado/fechar para a janela do telão. Correção no setup_platforms.sh (cada janela acha o próprio plugin por SetPropW 'psm_mkv'); o CI do Windows clica na mesa com o telão aberto e testa o fechar. Aviso "Abrindo telão… aguarde" no painel e no selo.
-(5) Cronômetro solto abaixo do telão: modelo `run` do PocketStage no núcleo (cronometro.dart: Run, Cronometro, testes), guardado em show.json e exportado; na mesa (pedido do Mello): cronômetro simples, sem fila, só progressivo, com Play, Pause e Stop (Stop zera), box pequeno; usa running/runStart/acc do run (CronometroSolto); log 'Cronômetro · Play/Pause/Stop'. O modelo completo com fila fica no núcleo para as próximas fases. Linhas numeradas nos ▶; teclas 1–9 e 0 tocam as linhas 1–10 (atalho de mídia com a mesma tecla vence); o exemplo não tem mais atalhos 1, 2, 3 nos sinais (migração automática). (6) Registro do show (Menu › Registro do show): lista, exportar .txt, limpar. (7) Exemplo v2: sinais 1-3 e entradas Rock/Pop/HipHop em MP3 enviados pelo Mello; cartaz "Comédia Stand Up"; instalações antigas ganham o exemplo novo na lista uma vez. Web saiu da fila (só app e computador); o protótipo web só recebeu os mesmos exemplos.
-Próxima fase, nesta ordem: cronômetro de palco (modelo `run` do PocketStage, plano aguardando ok); (4c) tela externa no iPhone/iPad; (5) teste em palco em vários aparelhos (mín. um Android, um iPhone ou iPad e um computador, com tabela de aparelhos testados); (6) decisões pendentes; (7) funções de operador: verificar show, mover/copiar mídia, duplicar show, desfazer, tela de log; (8) Fase 3 com o PocketStage.
-Riscos: telão nativo em cada sistema; pan/ganho no media_kit; iOS exige Mac e conta Apple Developer; arquivos no iOS precisam ser copiados.
+Fase de base concluída em 2026-10-16 (Mello: "atingimos o objetivo até aqui"). Versões de teste em Releases › teste.
+Feito e testado pelo Mello no celular e no PC:
+- Build no GitHub Actions (Android, Windows, macOS, iOS sem assinatura); núcleo Dart com testes; capturas no ramo ci-capturas; teste da mesa com telão no Windows no ramo ci-capturas-win.
+- Mesa, Shows, Editor, Ajustes da mídia, Ajustes; salvamento automático; pergunta antes de fechar; Exportar show / completo; "ARQUIVO FALTANDO".
+- Android: telão HDMI (Presentation + 2º motor `telaoMain`, canal psm/telao) e DeX (TelaoActivity); som/vídeo por ExoPlayer nativo (Som.kt, canal psm/player); saída de som escolhida (padrão telefone); serviço em primeiro plano.
+- Computador: telão em 2ª janela (desktop_multi_window 0.3.1 + window_manager fork boyan01 6fae92d, posição nativa psm/janela); aviso "Abrindo telão… aguarde". Mesa travava com o telão aberto: o media_kit_video guarda instância global e subclassifica a janela; corrigido no setup_platforms.sh (SetPropW 'psm_mkv', build falha se não aplicar).
+- Cronômetro simples abaixo do telão (Play, Pause, Stop; progressivo; sem fila); modelo `run` completo em cronometro.dart para depois.
+- Registro do show (Menu): lista, exportar .txt, limpar.
+- 48 e 64 botões; ▶ numerados; teclas 1–9/0 tocam linhas.
+- Exemplo v3: sinais e entradas Rock/Pop/HipHop (MP3 do Mello), cartaz "Comédia Stand Up"; migração tira atalhos 1–3 dos sinais em exemplos antigos.
+Próximos passos (ordem a partir do 2 é proposta; o Mello decide):
+1. Assinatura fixa do APK: Mello cria os segredos PSM_KEYSTORE_B64 e PSM_KEY_PASSWORD (assinatura-psm.zip entregue; keystore nunca no repositório).
+2. Teste em palco: um Android e um computador com telão e mesa de som; tabela de aparelhos testados.
+3. Decisões pendentes (tabela na especificação).
+4. Funções de operador: verificar show, mover/copiar mídia, duplicar show, desfazer.
+5. Abrir .psshow pelo arquivo e deep link.
+6. Cronômetro com fila (regressiva, fases, textos do PS) usando o `run` existente.
+7. iPhone e iPad (telão externo).
+8. Fase 3 com o PocketStage (cronômetro linkado).
+Riscos: ajuste do media_kit_video ao atualizar o media_kit; pan/ganho > 0 dB a validar; iOS exige Mac e conta Apple Developer.
