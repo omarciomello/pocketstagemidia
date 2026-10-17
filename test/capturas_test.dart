@@ -175,6 +175,26 @@ void main() {
     await _tela(t, const Size(1280, 720), EditorScreen(app: app, show: app.shows.first), 'editor');
   }, skip: !ligado);
 
+  testWidgets('editor: arrastar move e copiar mostra o aviso de colar', (t) async {
+    final (app, _, __) = await _app();
+    await _tela(t, const Size(1280, 900), EditorScreen(app: app, show: app.shows.first), 'editor_copiar', antes: () async {
+      // segura "Tom de espera" e solta no primeiro botão vazio (linha 4)
+      final de = t.getCenter(find.text('Tom de espera'));
+      final para = t.getCenter(find.text('+ Mídia').first);
+      final g = await t.startGesture(de);
+      await t.pump(const Duration(milliseconds: 800));
+      await g.moveTo(para);
+      await t.pump(const Duration(milliseconds: 100));
+      await g.up();
+      await t.pump(const Duration(milliseconds: 300));
+      // copiar "Cartaz do show" pelo menu do botão
+      await t.tap(find.text('Cartaz do show'));
+      await t.pumpAndSettle();
+      await t.tap(find.text('Copiar'));
+      await t.pumpAndSettle();
+    });
+  }, skip: !ligado);
+
   testWidgets('ajustes da mídia', (t) async {
     final (app, _, __) = await _app();
     final s = app.shows.first;
