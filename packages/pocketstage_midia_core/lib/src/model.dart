@@ -7,10 +7,10 @@ import 'cronometro.dart';
 const int cols = 4;
 
 /// Máximo de botões num show.
-const int maxCells = 32;
+const int maxCells = 64;
 
 /// Quantidades de botões permitidas.
-const List<int> allowedCounts = [4, 8, 12, 16, 20, 24, 28, 32];
+const List<int> allowedCounts = [4, 8, 12, 16, 20, 24, 28, 32, 48, 64];
 
 /// Formato e versão do show.json.
 const String showFormat = 'pocketstage.show';
@@ -679,6 +679,18 @@ class Show {
         extra: extra,
       );
 
+  /// Até 32 botões o JSON tem 32 posições, como no PocketStage; acima disso, até o último botão preenchido.
+  int _celulasNoJson() {
+    var n = 32;
+    for (var i = maxCells - 1; i >= 32; i--) {
+      if (cells[i] != null || i < count) {
+        n = i + 1;
+        break;
+      }
+    }
+    return n;
+  }
+
   /// show.json completo, com o cabeçalho de formato e versão.
   Map<String, dynamic> toJson() {
     final o = <String, dynamic>{
@@ -695,7 +707,7 @@ class Show {
     o['lineup'] = [for (final l in lineup) deepCopyJson(l.raw)];
     o['media'] = {
       'count': count,
-      'cells': [for (final c in cells) c?.toJson()],
+      'cells': [for (final c in cells.take(_celulasNoJson())) c?.toJson()],
     };
     if (run != null) o['run'] = run!.toJson();
     o['updatedAt'] = updatedAt;

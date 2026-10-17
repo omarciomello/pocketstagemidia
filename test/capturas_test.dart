@@ -69,15 +69,15 @@ Show _show() {
   String id(int i) => 'c$i';
   const caio = 'L2';
   final c = List<Cue?>.filled(maxCells, null);
-  c[0] = Cue(id: id(0), uri: '/x.wav', name: '1º sinal', kind: MediaKind.audio, color: '#E2604F', hotkey: '1', fadeOut: false);
+  c[0] = Cue(id: id(0), uri: '/x.wav', name: '1º sinal', kind: MediaKind.audio, color: '#E2604F', fadeOut: false);
   c[1] = Cue(id: id(1), uri: '/x.wav', name: 'Tom de espera', kind: MediaKind.audio, loop: true, fadeIn: true);
   c[2] = Cue(id: id(2), uri: '/x.png', name: 'Cartaz do show', kind: MediaKind.image, fadeIn: true);
   c[3] = Cue(id: id(3), uri: '', name: 'Desliguem os celulares', kind: MediaKind.text, text: 'Desliguem os celulares', autoStopSec: 8, note: 'sai sozinho em 8 s');
-  c[4] = Cue(id: id(4), uri: '/x.wav', name: '2º sinal', kind: MediaKind.audio, color: '#E2604F', hotkey: '2');
+  c[4] = Cue(id: id(4), uri: '/x.wav', name: '2º sinal', kind: MediaKind.audio, color: '#E2604F');
   c[5] = Cue(id: id(5), uri: '/x.wav', name: 'Vinheta de entrada', kind: MediaKind.audio, linkId: caio, role: Role.entrada, visualId: id(6), color: '#E8C547', note: 'quando o apresentador chamar', duckDb: -10);
   c[6] = Cue(id: id(6), uri: '/x.png', name: 'Fundo céu noturno', kind: MediaKind.image, linkId: caio, role: Role.fundo);
   c[7] = Cue(id: id(7), uri: '', name: 'Comediante 01', kind: MediaKind.text, text: 'Comediante 01\nstand-up · 10 min', textPos: TextPos.right, textSize: TextSize.g, linkId: caio, role: Role.entrada);
-  c[8] = Cue(id: id(8), uri: '/x.wav', name: '3º sinal', kind: MediaKind.audio, color: '#E2604F', hotkey: '3');
+  c[8] = Cue(id: id(8), uri: '/x.wav', name: '3º sinal', kind: MediaKind.audio, color: '#E2604F');
   c[9] = Cue(id: id(9), uri: '/x.wav', name: 'Ruído de plateia', kind: MediaKind.audio, lockAfter: true);
   c[10] = Cue(id: id(10), uri: '/x.mp4', name: 'Abertura em vídeo', kind: MediaKind.video);
   c[11] = Cue(id: id(11), uri: '', name: 'Bar aberto no foyer', kind: MediaKind.text, text: 'Bar aberto no foyer', preWaitSec: 3);
@@ -131,7 +131,7 @@ void main() {
     clock.advance(1200);
     be.players['c1']!.positionMs = 63000;
     be.players['c5']!.positionMs = 181500;
-    app.cronometroCmd((c, a) => c.play(a - 95000));
+    app.cronometroSoltoCmd((c, a) => c.play(a - 95000));
     await _tela(t, const Size(1280, 720), ShowScreen(app: app), 'mesa_1280x720');
   }, skip: !ligado);
 
@@ -155,11 +155,9 @@ void main() {
     for (final (dt, tipo, texto) in [
       (0, 'cue_go', 'Trilha · 1º sinal'),
       (12000, 'cue_end', 'Terminou · Trilha · 1º sinal'),
-      (60000, 'timer', 'Show iniciado'),
-      (60000, 'timer', 'Play · Abertura'),
+      (60000, 'timer', 'Cronômetro · Play'),
       (61000, 'cue_go', 'Imagem · Cartaz do show'),
-      (300000, 'timer', 'Estourou o tempo · Abertura · fila 05:00 · luz automática'),
-      (342000, 'timer', 'Saiu · Abertura · fila 05:00 · fez 05:42 (+00:42 estourou)'),
+      (342000, 'timer', 'Cronômetro · Pause (04:42)'),
       (350000, 'stop_all', 'Parar tudo'),
     ]) {
       app.store.appendLog(s.id, LogEntry(t: t0 + dt, type: tipo, ref: null, linkId: null, text: texto));

@@ -4,6 +4,21 @@ import 'package:pocketstage_midia_core/pocketstage_midia_core.dart';
 import 'package:test/test.dart';
 
 void main() {
+  group('Show com 48 e 64 botões', () {
+    test('até 32 o JSON tem 32 posições; com 64, todas vão e voltam', () {
+      final cue = Cue(id: 'z', uri: '/m/z.mp3', name: 'Z', kind: MediaKind.audio);
+      final pequeno = Show(id: 'a', name: 'A', count: 12, cells: const []);
+      expect((pequeno.toJson()['media'] as Map)['cells'], hasLength(32));
+      final grande = Show(id: 'b', name: 'B', count: 64, cells: List<Cue?>.generate(64, (i) => i == 63 ? cue : null));
+      final j = grande.toJson();
+      expect((j['media'] as Map)['cells'], hasLength(64));
+      final back = Show.fromJson(jsonDecode(jsonEncode(j)) as Map<String, dynamic>);
+      expect(back.count, 64);
+      expect(back.cells[63]?.id, 'z');
+      expect(Show.fromJson({...Show(id: 'c', name: 'C', count: 48, cells: const []).toJson()}).count, 48);
+    });
+  });
+
   group('Cue', () {
     test('ida e volta com todos os campos e campos desconhecidos', () {
       final j = {
@@ -125,7 +140,7 @@ void main() {
       final s = Show.fromJson(j);
       expect(s.count, 8);
       expect(s.rows, 2);
-      expect(s.cells, hasLength(32));
+      expect(s.cells, hasLength(maxCells));
       expect(s.cells[0]?.name, 'Abertura');
       expect(s.usedCount(), 1);
       expect(s.lineupName('L1'), 'Caio Vidal');
@@ -166,7 +181,7 @@ void main() {
         },
       });
       expect(s.count, 12);
-      expect(s.cells, hasLength(32));
+      expect(s.cells, hasLength(maxCells));
       expect(s.indexOf('c12'), -1, reason: 'fora da parte em uso');
       expect(s.indexOf('c11'), 11);
     });

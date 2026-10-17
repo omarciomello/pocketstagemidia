@@ -328,3 +328,38 @@ class Cronometro {
     return '${d(s ~/ 3600)}:${d(s % 3600 ~/ 60)}:${d(s % 60)}';
   }
 }
+
+/// Cronômetro solto da mesa (fase atual): só conta para cima, com Play, Pause e Stop.
+/// Usa os campos `running`, `runStart`, `acc` e `showStart` do mesmo `run`; a fila fica para depois.
+class CronometroSolto {
+  const CronometroSolto(this.run);
+  final Run run;
+
+  int elapsed(int agora) => run.acc + (run.running ? agora - run.runStart : 0);
+
+  /// MM:SS (o minuto passa de 99 se precisar).
+  String relogio(int agora) => Cronometro.mmss(elapsed(agora));
+
+  bool get zerado => !run.running && run.acc == 0;
+
+  RunPasso play(int agora) {
+    if (run.running) return RunPasso(run);
+    final continua = run.acc;
+    final r = run.copyWith(running: true, runStart: agora, countMode: 'up', showStart: run.showStart ?? agora);
+    return RunPasso(r, [continua > 0 ? 'Cronômetro · Play (continua de ${Cronometro.mmss(continua)})' : 'Cronômetro · Play']);
+  }
+
+  RunPasso pause(int agora) {
+    if (!run.running) return RunPasso(run);
+    final r = run.copyWith(acc: run.acc + agora - run.runStart, running: false);
+    return RunPasso(r, ['Cronômetro · Pause (${Cronometro.mmss(r.acc)})']);
+  }
+
+  /// Para e zera.
+  RunPasso stop(int agora) {
+    if (zerado) return RunPasso(run);
+    final feito = elapsed(agora);
+    final r = run.copyWith(running: false, acc: 0, runStart: 0, showStart: null);
+    return RunPasso(r, ['Cronômetro · Stop (${Cronometro.mmss(feito)})']);
+  }
+}

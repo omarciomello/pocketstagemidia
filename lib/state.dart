@@ -72,7 +72,21 @@ class AppState extends ChangeNotifier {
     // Primeira vez: cria o exemplo e abre nele. Exemplo novo numa versão nova: acrescenta
     // na lista, sem mexer no exemplo antigo (que o operador pode ter editado).
     final primeira = shows.isEmpty && !store.sampleCreated;
-    if (primeira || (store.sampleCreated && store.sampleVersion < versaoExemplo)) {
+    if (store.sampleVersion < 3) {
+      // Exemplos antigos: os sinais tinham as teclas 1, 2 e 3, que agora tocam as linhas.
+      for (var i = 0; i < shows.length; i++) {
+        final sh = shows[i];
+        if (sh.name != 'Noite de Stand-up (exemplo)') continue;
+        final cells = [
+          for (final c in sh.cells)
+            c != null && c.name.endsWith('º sinal') && const ['1', '2', '3'].contains(c.hotkey) ? c.copyWith(hotkey: '') : c,
+        ];
+        shows[i] = sh.copyWith(cells: cells);
+        store.saveShow(shows[i]);
+      }
+    }
+    // Exemplo com as entradas de convidados (versão 2) para quem ainda não tem.
+    if (primeira || (store.sampleCreated && store.sampleVersion < 2)) {
       try {
         final sample = await createSampleShow(store);
         store.saveShow(sample);
@@ -206,10 +220,21 @@ class AppState extends ChangeNotifier {
 
   /// Aplica um comando do cronômetro: guarda o `run` no show e registra no log.
   void cronometroCmd(RunPasso Function(Cronometro c, int agora) cmd) {
+    final agora = DateTime.now().millisecondsSinceEpoch;
+    _aplicarRun(cmd(cronometro, agora), agora);
+  }
+
+  /// Cronômetro solto da mesa (só Play, Pause e Stop).
+  CronometroSolto get cronometroSolto => CronometroSolto(active?.run ?? const Run());
+
+  void cronometroSoltoCmd(RunPasso Function(CronometroSolto c, int agora) cmd) {
+    final agora = DateTime.now().millisecondsSinceEpoch;
+    _aplicarRun(cmd(cronometroSolto, agora), agora);
+  }
+
+  void _aplicarRun(RunPasso p, int agora) {
     final s = active;
     if (s == null) return;
-    final agora = DateTime.now().millisecondsSinceEpoch;
-    final p = cmd(cronometro, agora);
     for (final t in p.log) {
       final e = LogEntry(t: agora, type: 'timer', ref: p.run.curId, linkId: p.run.curId, text: t);
       store.appendLog(s.id, e);

@@ -109,4 +109,20 @@ void main() {
     expect(back.toJson()['run'], r.toJson());
     expect(Show(id: 's', name: 'S', count: 4, cells: const []).toJson().containsKey('run'), false);
   });
+
+  test('cronômetro solto: Play, Pause, Play continua, Stop zera', () {
+    var p = const CronometroSolto(Run()).play(t0);
+    expect(p.log, ['Cronômetro · Play']);
+    expect(CronometroSolto(p.run).relogio(t0 + 65000), '01:05');
+    p = CronometroSolto(p.run).pause(t0 + 65000);
+    expect(p.log, ['Cronômetro · Pause (01:05)']);
+    expect(CronometroSolto(p.run).relogio(t0 + 999999), '01:05');
+    p = CronometroSolto(p.run).play(t0 + 100000);
+    expect(p.log, ['Cronômetro · Play (continua de 01:05)']);
+    p = CronometroSolto(p.run).stop(t0 + 110000);
+    expect(p.log, ['Cronômetro · Stop (01:15)']);
+    expect(CronometroSolto(p.run).zerado, true);
+    expect(CronometroSolto(p.run).relogio(t0), '00:00');
+    expect(CronometroSolto(p.run).stop(t0).log, isEmpty);
+  });
 }

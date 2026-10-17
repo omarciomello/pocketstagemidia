@@ -17,7 +17,25 @@ class CueKeyAction extends KeyAction {
   final String cueId;
 }
 
-/// Resolve a tecla [name]. Atalho geral vence atalho de mídia. null = nada.
+/// Atalho de linha: as teclas 1 a 9 (e 0 = linha 10) tocam a linha inteira.
+class RowKeyAction extends KeyAction {
+  const RowKeyAction(this.row);
+  final int row;
+}
+
+/// Linha (0 em diante) que a tecla [name] toca, ou null.
+int? rowOfKey(String name, Show show) {
+  if (name.length != 1) return null;
+  final d = int.tryParse(name);
+  if (d == null) return null;
+  final row = d == 0 ? 9 : d - 1;
+  return row < show.rows ? row : null;
+}
+
+/// Tecla da linha [row] (0 em diante), ou null acima da linha 10.
+String? keyOfRow(int row) => row < 9 ? '${row + 1}' : (row == 9 ? '0' : null);
+
+/// Resolve a tecla [name]. Atalho geral vence atalho de mídia, que vence atalho de linha. null = nada.
 KeyAction? resolveKey(String name, Settings settings, Show? show) {
   if (name.isEmpty) return null;
   for (final g in ShortcutAction.values) {
@@ -28,7 +46,8 @@ KeyAction? resolveKey(String name, Settings settings, Show? show) {
     final c = show.cells[i];
     if (c != null && c.hotkey == name) return CueKeyAction(c.id);
   }
-  return null;
+  final row = rowOfKey(name, show);
+  return row == null ? null : RowKeyAction(row);
 }
 
 /// Nomes amigáveis das teclas especiais.
@@ -56,6 +75,8 @@ String? keyConflict(String name, Settings settings, Show? show, {String? exceptC
       final c = show.cells[i];
       if (c != null && c.id != exceptCueId && c.hotkey == name) return c.name;
     }
+    final row = rowOfKey(name, show);
+    if (row != null) return 'Linha ${row + 1}';
   }
   return null;
 }

@@ -115,6 +115,8 @@ class _ShowScreenState extends State<ShowScreen> {
         }
       case CueKeyAction(:final cueId):
         app.dispatch(Go(cueId));
+      case RowKeyAction(:final row):
+        app.dispatch(PlayRow(row));
     }
     return KeyEventResult.handled;
   }
@@ -511,6 +513,7 @@ class _ShowScreenState extends State<ShowScreen> {
                   child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
                     if (linhaGo) ...[
                       _RowGo(
+                        numero: r + 1,
                         atual: st.currentRow == r,
                         onTap: st.locked ? null : () => app.dispatch(PlayRow(r)),
                       ),
@@ -677,7 +680,8 @@ class _ShowScreenState extends State<ShowScreen> {
 }
 
 class _RowGo extends StatelessWidget {
-  const _RowGo({required this.atual, required this.onTap});
+  const _RowGo({required this.numero, required this.atual, required this.onTap});
+  final int numero;
   final bool atual;
   final VoidCallback? onTap;
 
@@ -693,8 +697,18 @@ class _RowGo extends StatelessWidget {
           border: Border.all(color: atual ? Cores.ciano : Cores.linha),
           boxShadow: atual ? const [BoxShadow(color: Color(0x4D6FD3DF), blurRadius: 18, offset: Offset(0, 4))] : null,
         ),
-        alignment: Alignment.center,
-        child: Icon(Icons.play_arrow_rounded, size: 24, color: atual ? Cores.tinta : Cores.textoFraco),
+        child: Stack(children: [
+          Center(child: Icon(Icons.play_arrow_rounded, size: 24, color: atual ? Cores.tinta : Cores.textoFraco)),
+          // número da linha; de 1 a 10 é também a tecla que toca a linha (0 = linha 10)
+          Positioned(
+            top: 5,
+            left: 0,
+            right: 0,
+            child: Text('$numero',
+                textAlign: TextAlign.center,
+                style: mono(size: 11, color: atual ? Cores.tinta : Cores.textoFraco, weight: FontWeight.w700)),
+          ),
+        ]),
       ),
     );
   }
